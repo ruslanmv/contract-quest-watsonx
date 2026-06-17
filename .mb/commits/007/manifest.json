@@ -1,0 +1,12 @@
+{
+  "batch_ref": "bat-ddc84b3f4aef",
+  "changed": [
+    "frontend/index.html"
+  ],
+  "commit_no": 7,
+  "commit_ref": "mc-53fa95a0ecf0",
+  "parent_commit_ref": "mc-97e2f86b640e",
+  "summary": "Repair: fix non-finite gradient crash",
+  "tree_hash": "sha256:959f9cada636604db33bc1ba82fed347457dcb032c37ac195b4343c5f0ea6e72",
+  "validation_status": "approved"
+}

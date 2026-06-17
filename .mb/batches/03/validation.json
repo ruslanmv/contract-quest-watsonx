@@ -1,0 +1,44 @@
+{
+  "report_id": "val-962122d43593",
+  "bundle_id": "bp-eaeb5705edf1",
+  "status": "approved",
+  "score": 100,
+  "violations": [],
+  "repair_prompt": null,
+  "checks": [
+    {
+      "check_id": "forbidden_changes_absent",
+      "status": "passed",
+      "message": "checked 1 path(s)"
+    },
+    {
+      "check_id": "changes_within_allowlist",
+      "status": "passed",
+      "message": "checked allowlist scope"
+    },
+    {
+      "check_id": "required_files_present",
+      "status": "skipped",
+      "message": "full tree not provided"
+    },
+    {
+      "check_id": "dependency_policy",
+      "status": "passed",
+      "message": "checked declared dependencies"
+    },
+    {
+      "check_id": "no_secrets_introduced",
+      "status": "passed",
+      "message": "scanned 0 file(s)"
+    },
+    {
+      "check_id": "architecture_matches_blueprint",
+      "status": "skipped",
+      "message": "no submitted blueprint to compare"
+    }
+  ],
+  "approved": true,
+  "matrixhub_publishable": true,
+  "summary": "All Matrix contract checks passed.",
+  "created_at": "2026-06-17T09:53:25.158903Z"
+}

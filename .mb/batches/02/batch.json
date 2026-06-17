@@ -1,0 +1,47 @@
+{
+  "batch_id": "bat-a746b3bf070a",
+  "change_type": "add-feature",
+  "commit_ref": "mc-7ad8c97617c2",
+  "goal_md": "Controls, hero states, screens, richer world art",
+  "is_repair": false,
+  "ordinal": 2,
+  "parent_commit_ref": "mc-e6d47e6c8aaa",
+  "plan": {
+    "acceptance_commands": [
+      "test -f frontend/index.html",
+      "grep -q '<canvas' frontend/index.html"
+    ],
+    "allowed_files": [
+      "frontend/index.html"
+    ],
+    "batch_id": "bat-a746b3bf070a",
+    "blueprint_id": "bp-eaeb5705edf1",
+    "change_summary": [
+      "Apply requested changes",
+      "Update prompt pack"
+    ],
+    "change_type": "add-feature",
+    "goal_md": "Controls, hero states, screens, richer world art",
+    "is_repair": false,
+    "ordinal": 2,
+    "parent_commit_ref": "mc-e6d47e6c8aaa",
+    "schema_version": "matrix.builder.batch-plan/v1",
+    "tasks": [
+      {
+        "acceptance_criteria": [
+          "Change implemented",
+          "Tests pass",
+          "No Matrix control files changed"
+        ],
+        "allowed_files": [
+          "frontend/index.html"
+        ],
+        "task_id": "TASK-002",
+        "title": "Controls, hero states, screens, richer world art"
+      }
+    ],
+    "title": "Controls, hero states, screens, richer world art"
+  },
+  "status": "committed",
+  "title": "Controls, hero states, screens, richer world art"
+}

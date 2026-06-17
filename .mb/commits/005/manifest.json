@@ -1,0 +1,12 @@
+{
+  "batch_ref": "bat-5e9e2622f034",
+  "changed": [
+    "frontend/index.html"
+  ],
+  "commit_no": 5,
+  "commit_ref": "mc-8210d33b3004",
+  "parent_commit_ref": "mc-a9d39d15b1b5",
+  "summary": "Levels, mini-boss, RMD governance",
+  "tree_hash": "sha256:959f9cada636604db33bc1ba82fed347457dcb032c37ac195b4343c5f0ea6e72",
+  "validation_status": "approved"
+}

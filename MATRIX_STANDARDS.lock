@@ -1,0 +1,15 @@
+# Matrix Builder — Standards lock (pinned)
+standards:
+  - id: RMD-101
+    text: AI coders are workers, not architects.
+  - id: RMD-103
+    text: Control files are protected.
+  - id: RMD-111
+    text: Acceptance criteria are law.
+baselines:
+  - NIST SSDF
+  - OWASP Top 10
+  - OWASP LLM Top 10
+  - SLSA
+provider_rule: watsonx-only
+no_secrets_committed: true

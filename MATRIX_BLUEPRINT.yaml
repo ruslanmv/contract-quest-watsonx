@@ -1,0 +1,18 @@
+# Matrix Builder — Blueprint (contract identity)
+project: contract-quest-watsonx
+name: Contract Quest
+version: v1.0.0
+quality: standard
+provider_rule: watsonx-only
+coder:
+  provider: watsonx
+  model: openai/gpt-oss-120b
+stack:
+  type: single-file-canvas
+  output: frontend/index.html
+governance:
+  definitions: Ruslan Magana Definitions (RMD)
+  rules: [RMD-101, RMD-103, RMD-111]
+allowed_change_roots:
+  - frontend/
+batches: 6

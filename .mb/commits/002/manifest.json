@@ -1,0 +1,12 @@
+{
+  "batch_ref": "bat-a746b3bf070a",
+  "changed": [
+    "frontend/index.html"
+  ],
+  "commit_no": 2,
+  "commit_ref": "mc-7ad8c97617c2",
+  "parent_commit_ref": "mc-e6d47e6c8aaa",
+  "summary": "Controls, hero states, screens, richer world art",
+  "tree_hash": "sha256:959f9cada636604db33bc1ba82fed347457dcb032c37ac195b4343c5f0ea6e72",
+  "validation_status": "approved"
+}

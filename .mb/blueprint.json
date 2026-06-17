@@ -1,0 +1,83 @@
+{
+  "blueprint_id": "bp-eaeb5705edf1",
+  "candidate_id": "cand-ae491dd04faf",
+  "name": "Standard Matrix Bundle",
+  "slug": "contract-quest-a-premium-original-side-scrolling-arcade-platformer-singl",
+  "idea": "Contract Quest — a premium original side-scrolling arcade platformer, single self-contained HTML file, governed by Ruslan Magana Definitions, built with watsonx",
+  "quality_level": "standard",
+  "stack": {
+    "frontend": "nextjs",
+    "backend": "watsonx-orchestrate",
+    "worker": "python",
+    "database": "postgresql",
+    "auth": "none",
+    "deploy": "docker"
+  },
+  "pages": [
+    "/",
+    "/dashboard",
+    "/about"
+  ],
+  "services": [
+    "frontend",
+    "api",
+    "worker"
+  ],
+  "api_routes": [
+    {
+      "method": "GET",
+      "path": "/api/v1/health",
+      "summary": "Health check",
+      "auth_required": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/run",
+      "summary": "Run the primary workflow",
+      "auth_required": false
+    }
+  ],
+  "required_files": [
+    "README.md",
+    "MATRIX_BLUEPRINT.yaml",
+    "MATRIX_STANDARDS.lock",
+    "MATRIX_TASKS.md",
+    "MATRIX_ALLOWED_CHANGES.md",
+    "MATRIX_ACCEPTANCE_CRITERIA.md",
+    "MATRIX_VALIDATION.md",
+    "docs/architecture.md",
+    "docs/security.md",
+    "docs/standards-report.md"
+  ],
+  "allowed_change_roots": [
+    "frontend/",
+    "backend/",
+    "worker/",
+    "tests/"
+  ],
+  "forbidden_changes": [
+    "MATRIX_BLUEPRINT.yaml",
+    "MATRIX_STANDARDS.lock",
+    ".github/workflows/"
+  ],
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "title": "Contract Quest — a premium original side-scrolling arcade platformer, single self-contained HTML file, governed by Rusla",
+      "allowed_files": [
+        "backend/app/task-1.py",
+        "backend/tests/test_task_1.py"
+      ],
+      "acceptance_criteria": [
+        "Completed: Contract Quest — a premium original side-scrolling arcade platformer, single sel",
+        "No Matrix control files changed"
+      ]
+    }
+  ],
+  "acceptance_commands": [
+    "pytest -q",
+    "ruff check .",
+    "npm run build"
+  ],
+  "standards_lock_ref": "MATRIX_STANDARDS.lock"
+}

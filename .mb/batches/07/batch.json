@@ -1,0 +1,47 @@
+{
+  "batch_id": "bat-ddc84b3f4aef",
+  "change_type": "add-feature",
+  "commit_ref": "mc-53fa95a0ecf0",
+  "goal_md": "Repair: fix non-finite gradient crash and title render",
+  "is_repair": false,
+  "ordinal": 7,
+  "parent_commit_ref": "mc-97e2f86b640e",
+  "plan": {
+    "acceptance_commands": [
+      "test -f frontend/index.html",
+      "grep -q '<canvas' frontend/index.html"
+    ],
+    "allowed_files": [
+      "frontend/index.html"
+    ],
+    "batch_id": "bat-ddc84b3f4aef",
+    "blueprint_id": "bp-eaeb5705edf1",
+    "change_summary": [
+      "Apply requested changes",
+      "Update prompt pack"
+    ],
+    "change_type": "add-feature",
+    "goal_md": "Repair: fix non-finite gradient crash and title render",
+    "is_repair": false,
+    "ordinal": 7,
+    "parent_commit_ref": "mc-97e2f86b640e",
+    "schema_version": "matrix.builder.batch-plan/v1",
+    "tasks": [
+      {
+        "acceptance_criteria": [
+          "Change implemented",
+          "Tests pass",
+          "No Matrix control files changed"
+        ],
+        "allowed_files": [
+          "frontend/index.html"
+        ],
+        "task_id": "TASK-002",
+        "title": "Repair: fix non-finite gradient crash"
+      }
+    ],
+    "title": "Repair: fix non-finite gradient crash"
+  },
+  "status": "committed",
+  "title": "Repair: fix non-finite gradient crash"
+}

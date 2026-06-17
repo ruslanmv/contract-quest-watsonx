@@ -1,0 +1,12 @@
+{
+  "batch_ref": "bat-bff3bce514ec",
+  "changed": [
+    "frontend/index.html"
+  ],
+  "commit_no": 6,
+  "commit_ref": "mc-97e2f86b640e",
+  "parent_commit_ref": "mc-8210d33b3004",
+  "summary": "Polish: particles, audio, transitions, title, responsive",
+  "tree_hash": "sha256:959f9cada636604db33bc1ba82fed347457dcb032c37ac195b4343c5f0ea6e72",
+  "validation_status": "approved"
+}

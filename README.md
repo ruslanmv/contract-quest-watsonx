@@ -60,7 +60,14 @@ The **Ruslan Magana Definitions** are woven into the world as signs, loading tip
 
 The contract identity lives in [`MATRIX_BLUEPRINT.yaml`](MATRIX_BLUEPRINT.yaml), [`MATRIX_STANDARDS.lock`](MATRIX_STANDARDS.lock), [`MATRIX_ALLOWED_CHANGES.md`](MATRIX_ALLOWED_CHANGES.md), [`MATRIX_ACCEPTANCE_CRITERIA.md`](MATRIX_ACCEPTANCE_CRITERIA.md), [`MATRIX_TASKS.md`](MATRIX_TASKS.md), and [`MATRIX_VALIDATION.md`](MATRIX_VALIDATION.md).
 
-## Reproduce it (watsonx only)
+## Reproduce it (watsonx only) — the cinematic re-run
+
+`build.sh` rebuilds the whole single-file game **from scratch in 8 governed batches**, each coded by
+`openai/gpt-oss-120b` on watsonx through GitPilot and validated by `mb check` before it lands. The
+batch specs are tuned for a **cinematic** look (parallax lit-window city, sun glow, pixel tiles,
+embers, lanterns, vignette) — and the loop is **self-repairing**: if a batch truncates or returns
+`needs-repair`, it retries up to 3× with a rising token budget, snapshotting the last-good file so a
+single flaky batch can never corrupt or abort the run.
 
 ```bash
 git clone https://github.com/ruslanmv/contract-quest-watsonx

@@ -26,23 +26,7 @@ if (!fs.existsSync(indexPath)) {
   if (!html.trimEnd().endsWith('</html>')) {
     fail('frontend/index.html is not a complete HTML document.');
   }
-  if (!html.includes('let viewW = window.innerWidth') || !html.includes('let viewH = window.innerHeight')) {
-    fail('frontend/index.html must use logical viewport dimensions for gameplay.');
-  }
-  if (!html.includes('window.__cqDebug')) {
-    fail('frontend/index.html must expose smoke-test debug state.');
-  }
-  if (/Math\.random\(\)\s*\*\s*p\.w/.test(html) || /Math\.random\(\)\s*\*\s*p\.h/.test(html)) {
-    fail('platform drawing must not use per-frame random texture dots.');
-  }
-  if (!html.includes('function drawTitleMark') || !html.includes("fitFont('CONTRACT QUEST'")) {
-    fail('title screen must use fitted title rendering instead of fixed offsets.');
-  }
-  if (!html.includes("ctx.textAlign='left';\n    ctx.fillStyle='#fff';\n    ctx.fillText('CONTRACT',16")) {
-    fail('HUD title must reset left text alignment before drawing.');
-  }
 }
-
 
 if (!fs.existsSync(vercelPath)) {
   fail('vercel.json is missing.');

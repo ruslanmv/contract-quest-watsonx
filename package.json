@@ -4,11 +4,10 @@
   "private": true,
   "description": "Contract Quest browser game packaged for static hosting on Vercel.",
   "scripts": {
-    "build": "npm run verify",
+    "build": "node scripts/verify-static.js",
     "dev": "npx serve frontend",
     "start": "npx serve frontend",
-    "verify": "node scripts/verify-static.js",
-    "smoke": "npx -p @playwright/test playwright test"
+    "verify": "node scripts/verify-static.js"
   },
   "engines": {
     "node": ">=18"

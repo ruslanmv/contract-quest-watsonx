@@ -64,6 +64,8 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let dpr = window.devicePixelRatio || 1;
+  let viewW = window.innerWidth;
+  let viewH = window.innerHeight;
 
   // ---------- Safe Gradient Helpers ----------
   function safeLinearGradient(x0, y0, x1, y1) {
@@ -115,12 +117,14 @@
   // ---------- Resize ----------
   function resize() {
     dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
+    viewW = window.innerWidth;
+    viewH = window.innerHeight;
+    canvas.width = Math.floor(viewW * dpr);
+    canvas.height = Math.floor(viewH * dpr);
+    canvas.style.width = viewW + 'px';
+    canvas.style.height = viewH + 'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    const show = ('ontouchstart' in window) || window.innerWidth < 768;
+    const show = ('ontouchstart' in window) || viewW < 768;
     document.getElementById('mobile-controls').style.display = show ? 'flex' : 'none';
   }
   window.addEventListener('resize', resize);
@@ -140,6 +144,7 @@
   let gameState = 'start'; // start, play, pause, complete, gameover
   const keys = { left:false, right:false, jump:false, pause:false };
   let jumpHoldTimer = 0;
+  let prevJump = false;
 
   // ---------- Stats ----------
   let coinsCollected = 0;
@@ -158,174 +163,119 @@
   let currentLevel = 0;
   let levelName = '';
   let levelComplete = false;
+  let levelIntroTimer = 0;
 
   const levels = [
-    // Level 1 – Build Fields
+    // Level 1 – Build Fields: safe tutorial rhythm, coins, first stomp, checkpoint, gate.
     {
       name: 'Build Fields',
+      objective: 'Collect contract coins, stomp the Bug Bot, and validate the first Matrix Gate.',
+      story: 'The contract has been scattered across the Build Fields. Learn the run, jump, and stomp rhythm before the audit trail closes.',
+      tip: 'Move with A/D or arrows. Jump onto enemies from above to defeat them.',
+      start: {x:100},
       platforms: [
-        {x:-500,y:canvas.height-80,w:2000,h:80,type:'ground'},
-        {x:300,y:canvas.height-200,w:120,h:20,type:'brick'},
-        {x:600,y:canvas.height-300,w:150,h:20,type:'brick'},
-        {x:950,y:canvas.height-250,w:100,h:20,type:'metal'},
-        {x:1300,y:canvas.height-180,w:140,h:20,type:'brick'},
-        {x:1700,y:canvas.height-220,w:120,h:20,type:'metal'}
+        {x:-300,y:viewH-80,w:1250,h:80,type:'ground'},
+        {x:1050,y:viewH-80,w:820,h:80,type:'ground'},
+        {x:1970,y:viewH-80,w:720,h:80,type:'ground'},
+        {x:320,y:viewH-170,w:150,h:22,type:'brick'},
+        {x:560,y:viewH-260,w:160,h:22,type:'brick'},
+        {x:850,y:viewH-220,w:140,h:22,type:'metal'},
+        {x:1220,y:viewH-180,w:160,h:22,type:'brick'},
+        {x:1600,y:viewH-230,w:150,h:22,type:'metal'}
       ],
       collectibles: [
-        {type:'coin', x:400, y:canvas.height-260, collected:false},
-        {type:'coin', x:440, y:canvas.height-300, collected:false},
-        {type:'coin', x:480, y:canvas.height-330, collected:false},
-        {type:'coin', x:520, y:canvas.height-350, collected:false},
-        {type:'gem', x:800, y:canvas.height-340, collected:false},
-        {type:'gem', x:840, y:canvas.height-380, collected:false},
-        {type:'star', x:1200, y:canvas.height-400, collected:false}
+        {type:'coin', x:350, y:viewH-220, collected:false},
+        {type:'coin', x:390, y:viewH-250, collected:false},
+        {type:'coin', x:610, y:viewH-315, collected:false},
+        {type:'coin', x:660, y:viewH-315, collected:false},
+        {type:'gem', x:900, y:viewH-270, collected:false},
+        {type:'gem', x:1260, y:viewH-240, collected:false},
+        {type:'star', x:1650, y:viewH-290, collected:false}
       ],
       powerUps: [
-        {type:'shield', x:700, y:canvas.height-320, collected:false},
-        {type:'doubleJump', x:1100, y:canvas.height-360, collected:false}
+        {type:'shield', x:740, y:viewH-140, collected:false}
       ],
       enemies: [
-        {
-          type:'bugBot',
-          x:500,
-          y:canvas.height-200,
-          w:40,
-          h:30,
-          vx:1.2,
-          direction:1,
-          alive:true,
-          patrolMin:480,
-          patrolMax:560
-        }
+        {type:'bugBot', x:520, y:viewH-110, w:40, h:30, vx:1.2, direction:1, alive:true, patrolMin:500, patrolMax:760}
       ],
       panels: [
-        { // LEFT
-          x:200,
-          y:canvas.height-500,
-          w:250,
-          h:200,
-          title:'// CONTRACT RULES',
-          lines:['✔ Clarity','✔ Compliance','✔ Performance','✔ Security','✔ Reliability'],
-          align:'left',
-          bg:'rgba(0,0,0,0.5)'
-        },
-        { // CENTER
-          x:800,
-          y:canvas.height-520,
-          w:300,
-          h:220,
-          title:'contract.yaml',
-          lines:['version: 1.0','parties:',' - Builder',' - Client','terms:',' - deliver_quality',' - uphold_integrity',' - ship_value'],
-          align:'center',
-          bg:'rgba(0,150,200,0.4)'
-        },
-        { // RIGHT
-          x:1400,
-          y:canvas.height-480,
-          w:260,
-          h:180,
-          title:'ACCESS LOG',
-          lines:['USER: GITPILOT','CONTRACT: MATRIX BUILDER','STATUS: ACTIVE'],
-          align:'right',
-          bg:'rgba(0,0,0,0.5)'
-        }
+        {x:190, y:viewH-430, w:260, h:150, title:'// CONTRACT RULES', lines:['✔ Clarity','✔ Compliance','✔ Performance','✔ Security','✔ Reliability'], align:'left', bg:'rgba(0,0,0,0.55)'},
+        {x:1180, y:viewH-460, w:320, h:190, title:'contract.yaml', lines:['version: 1.0','parties: Builder + Client','terms: deliver_quality','terms: uphold_integrity','terms: ship_value'], align:'center', bg:'rgba(0,150,200,0.35)'},
+        {x:2060, y:viewH-360, w:270, h:150, title:'ACCESS LOG', lines:['USER: GITPILOT','CONTRACT: MATRIX BUILDER','STATUS: READY'], align:'right', bg:'rgba(0,0,0,0.55)'}
       ],
-      checkpoint: { x:1700, y:canvas.height-280, w:40, h:80, saved:false },
-      matrixGate: { x:2100, y:canvas.height-350, w:200, h:300, reached:false }
+      checkpoint: { x:1560, y:viewH-160, w:40, h:80, saved:false },
+      matrixGate: { x:2360, y:viewH-360, w:190, h:280, reached:false }
     },
-    // Level 2 – Dependency Cavern
+    // Level 2 – Dependency Cavern: gaps, moving platforms, double jump, slimes.
     {
       name: 'Dependency Cavern',
+      objective: 'Use Double Jump to cross dependency gaps and rescue the validation keys.',
+      story: 'The dependency cavern opens under the contract. Missing packages become pits; use Double Jump before you cross.',
+      tip: 'Grab Double Jump, then tap jump again in the air to clear gaps.',
+      start: {x:100},
       platforms: [
-        {x:-500,y:canvas.height-80,w:2000,h:80,type:'ground'},
-        // moving platform (will be animated)
-        {x:800,y:canvas.height-250,w:150,h:20,type:'brick',moving:true,range:200,dx:0,dir:1,speed:2},
-        {x:1200,y:canvas.height-350,w:150,h:20,type:'metal'},
-        {x:1500,y:canvas.height-200,w:120,h:20,type:'brick'}
+        {x:-300,y:viewH-80,w:760,h:80,type:'ground'},
+        {x:620,y:viewH-80,w:500,h:80,type:'ground'},
+        {x:1290,y:viewH-80,w:470,h:80,type:'ground'},
+        {x:1920,y:viewH-80,w:760,h:80,type:'ground'},
+        {x:520,y:viewH-210,w:150,h:22,type:'brick'},
+        {x:840,y:viewH-255,w:150,h:22,type:'brick',moving:true,range:160,dx:0,dir:1,speed:1.8},
+        {x:1180,y:viewH-310,w:150,h:22,type:'metal'},
+        {x:1510,y:viewH-230,w:150,h:22,type:'brick',moving:true,range:120,dx:0,dir:-1,speed:1.5}
       ],
       collectibles: [
-        {type:'coin', x:500, y:canvas.height-260, collected:false},
-        {type:'coin', x:540, y:canvas.height-300, collected:false},
-        {type:'key', x:900, y:canvas.height-340, collected:false},
-        {type:'key', x:940, y:canvas.height-380, collected:false}
+        {type:'coin', x:360, y:viewH-140, collected:false},
+        {type:'coin', x:560, y:viewH-265, collected:false},
+        {type:'key', x:900, y:viewH-315, collected:false},
+        {type:'key', x:1225, y:viewH-365, collected:false},
+        {type:'gem', x:1545, y:viewH-285, collected:false}
       ],
       powerUps: [
-        {type:'doubleJump', x:1300, y:canvas.height-360, collected:false}
+        {type:'doubleJump', x:430, y:viewH-150, collected:false}
       ],
       enemies: [
-        {
-          type:'promptSlime',
-          x:1000,
-          y:canvas.height-200,
-          w:45,
-          h:35,
-          vx:0.9,
-          direction:1,
-          alive:true,
-          patrolMin:980,
-          patrolMax:1060
-        }
+        {type:'promptSlime', x:700, y:viewH-115, w:45, h:35, vx:0.9, direction:1, alive:true, patrolMin:650, patrolMax:1040},
+        {type:'promptSlime', x:2020, y:viewH-115, w:45, h:35, vx:1.0, direction:-1, alive:true, patrolMin:1980, patrolMax:2300}
       ],
       panels: [
-        // RMD governance sign
-        {
-          x:600,
-          y:canvas.height-500,
-          w:200,
-          h:80,
-          title:'RMD‑101',
-          lines:['AI coders are workers, not architects.'],
-          align:'center',
-          bg:'rgba(0,0,0,0.6)'
-        }
+        {x:250, y:viewH-400, w:310, h:100, title:'RMD-101', lines:['AI coders are workers,','not architects.'], align:'center', bg:'rgba(0,0,0,0.62)'},
+        {x:1330, y:viewH-430, w:300, h:110, title:'DEPENDENCY MAP', lines:['1. collect double jump','2. cross the gap','3. recover keys'], align:'left', bg:'rgba(20,40,80,0.55)'}
       ],
-      checkpoint: { x:1600, y:canvas.height-280, w:40, h:80, saved:false },
-      matrixGate: { x:1900, y:canvas.height-350, w:200, h:300, reached:false }
+      checkpoint: { x:1320, y:viewH-160, w:40, h:80, saved:false },
+      matrixGate: { x:2380, y:viewH-360, w:190, h:280, reached:false }
     },
-    // Level 3 – Validation Gate
+    // Level 3 – Validation Gate: arena, boss, shield, final contract validation.
     {
       name: 'Validation Gate',
+      objective: 'Defeat the Rogue Architect, then enter the unlocked Matrix Gate.',
+      story: 'The Rogue Architect guards the final gate. Wait for the shield to drop, stomp three times, and restore the architecture.',
+      tip: 'Shield absorbs mistakes. Boss stomps count only while the blue shield is down.',
+      start: {x:100},
       platforms: [
-        {x:-500,y:canvas.height-80,w:2000,h:80,type:'ground'},
-        {x:600,y:canvas.height-250,w:150,h:20,type:'brick'},
-        {x:1000,y:canvas.height-300,w:150,h:20,type:'metal'}
+        {x:-300,y:viewH-80,w:2880,h:80,type:'ground'},
+        {x:520,y:viewH-230,w:160,h:22,type:'brick'},
+        {x:820,y:viewH-300,w:160,h:22,type:'metal'},
+        {x:1120,y:viewH-220,w:160,h:22,type:'brick'},
+        {x:1620,y:viewH-260,w:170,h:22,type:'metal'}
       ],
       collectibles: [
-        {type:'coin', x:700, y:canvas.height-260, collected:false},
-        {type:'coin', x:740, y:canvas.height-300, collected:false}
+        {type:'coin', x:560, y:viewH-285, collected:false},
+        {type:'coin', x:620, y:viewH-285, collected:false},
+        {type:'gem', x:875, y:viewH-355, collected:false},
+        {type:'star', x:1665, y:viewH-320, collected:false}
       ],
       powerUps: [
-        {type:'shield', x:1100, y:canvas.height-360, collected:false}
+        {type:'shield', x:1080, y:viewH-150, collected:false}
       ],
       enemies: [
-        {
-          type:'bugBot',
-          x:800,
-          y:canvas.height-200,
-          w:40,
-          h:30,
-          vx:1.2,
-          direction:1,
-          alive:true,
-          patrolMin:780,
-          patrolMax:860
-        }
-        // Mini‑boss – Rogue Architect (added later in loadLevel)
+        {type:'bugBot', x:720, y:viewH-110, w:40, h:30, vx:1.2, direction:1, alive:true, patrolMin:700, patrolMax:980}
       ],
       panels: [
-        {
-          x:500,
-          y:canvas.height-500,
-          w:250,
-          h:80,
-          title:'RMD‑111',
-          lines:['Acceptance criteria are law.'],
-          align:'center',
-          bg:'rgba(0,0,0,0.6)'
-        }
+        {x:350, y:viewH-420, w:300, h:100, title:'RMD-111', lines:['Acceptance criteria','are law.'], align:'center', bg:'rgba(0,0,0,0.62)'},
+        {x:1840, y:viewH-390, w:330, h:120, title:'BOSS CONTRACT', lines:['Shield down = stomp','3 approved hits','Gate unlocks after boss'], align:'left', bg:'rgba(80,20,40,0.58)'}
       ],
-      checkpoint: { x:1300, y:canvas.height-280, w:40, h:80, saved:false },
-      matrixGate: { x:1700, y:canvas.height-350, w:200, h:300, reached:false }
+      checkpoint: { x:1180, y:viewH-160, w:40, h:80, saved:false },
+      matrixGate: { x:2320, y:viewH-360, w:190, h:280, reached:false }
     }
   ];
 
@@ -340,7 +290,7 @@
 
   const hero = {
     x:100,
-    y:canvas.height-200,
+    y:viewH-200,
     w:40,
     h:60,
     vx:0,
@@ -355,8 +305,9 @@
   const camera = {
     x:0,
     update(){
-      const targetX = hero.x - canvas.width*0.35;
+      const targetX = Math.max(0, hero.x - viewW*0.35);
       this.x += (targetX - this.x)*0.08;
+      if(this.x < 0) this.x = 0;
     }
   };
 
@@ -379,18 +330,19 @@
     panels = JSON.parse(JSON.stringify(lvl.panels));
     checkpoint = JSON.parse(JSON.stringify(lvl.checkpoint));
     matrixGate = JSON.parse(JSON.stringify(lvl.matrixGate));
+    platforms.forEach(seedPlatformTexture);
 
     if(idx===2){
       enemies.push({
         type:'rogueArchitect',
-        x:1200,
-        y:canvas.height-250,
+        x:1500,
+        y:viewH-160,
         w:80,
         h:80,
         direction:1,
         speed:1.5,
-        patrolMin:1100,
-        patrolMax:1300,
+        patrolMin:1380,
+        patrolMax:1800,
         alive:true,
         shieldActive:true,
         shieldTimer:180,
@@ -401,6 +353,7 @@
 
     resetHero();
     levelComplete = false;
+    levelIntroTimer = 210;
     matrixGate.reached = false;
     // start fade-in transition
     transitionAlpha = 1;
@@ -408,6 +361,26 @@
   }
 
   // ---------- Game Flow ----------
+  function seedPlatformTexture(p){
+    if(p.type !== 'brick' || p.textureDots) return;
+    p.textureDots = Array.from({length:3}, (_, i) => ({
+      x: ((p.x * 17 + p.y * 31 + i * 53) % Math.max(1, p.w - 2)),
+      y: 6 + ((p.x * 11 + p.y * 19 + i * 29) % Math.max(1, p.h - 8))
+    }));
+  }
+
+  function advanceOrFinish(){
+    if(currentLevel < levels.length - 1){
+      currentLevel++;
+      loadLevel(currentLevel);
+      gameState='play';
+    } else {
+      flashMessage='CONTRACT VALIDATED!';
+      flashTimer=180;
+      gameState='win';
+    }
+  }
+
   function startGame(){
     gameState='play';
     lives = 3;
@@ -425,9 +398,55 @@
     gameState='play';
   }
 
+  function groundYAt(x){
+    let best = Infinity;
+    platforms.forEach(p=>{
+      if(x >= p.x && x <= p.x + p.w && p.y < best) best = p.y;
+    });
+    return Number.isFinite(best) ? best : viewH - 80;
+  }
+
+  function respawnHero(){
+    const respawnX = checkpoint.saved ? checkpoint.x + checkpoint.w + 24 : ((levels[currentLevel].start && levels[currentLevel].start.x) || 100);
+    hero.x = respawnX;
+    hero.y = groundYAt(respawnX + hero.w/2) - hero.h - 4;
+    hero.vx = 0;
+    hero.vy = 0;
+    hero.facing = 1;
+    hero.state = 'idle';
+    hero.jumpsUsed = 0;
+    hero.onGround = false;
+    jumpHoldTimer = 0;
+    prevJump = false;
+    camera.x = Math.max(0, hero.x - viewW*0.35);
+  }
+
+  function loseLife(reason){
+    if(shieldTimer>0 && reason !== 'pit'){
+      flashMessage = 'SHIELD BLOCKED!';
+      flashTimer = 60;
+      shieldTimer = Math.max(0, shieldTimer - 120);
+      SFX.powerup();
+      return;
+    }
+    if(invulnTimer>0) return;
+    lives--;
+    invulnTimer = 120;
+    flashMessage = lives > 0 ? (reason === 'pit' ? 'FELL! CHECKPOINT RELOAD' : 'HIT! CHECKPOINT RELOAD') : 'CONTRACT FAILED';
+    flashTimer = 90;
+    SFX.damage();
+    shakeTimer = 22;
+    shakeIntensity = 7;
+    if(lives<=0){
+      gameState='gameover';
+      return;
+    }
+    respawnHero();
+  }
+
   function resetHero(){
-    hero.x=100;
-    hero.y=canvas.height-200;
+    hero.x=(levels[currentLevel].start && levels[currentLevel].start.x) || 100;
+    hero.y=groundYAt(hero.x + hero.w/2)-hero.h-4;
     hero.vx=0;
     hero.vy=0;
     hero.facing=1;
@@ -440,6 +459,14 @@
     shieldTimer=0;
     doubleJumpTimer=0;
     doubleJumpActive=false;
+    jumpHoldTimer=0;
+    prevJump=false;
+  }
+
+  function handlePrimaryAction(){
+    if(gameState==='start') startGame();
+    else if(gameState==='gameover' || gameState==='win') restartGame();
+    else if(gameState==='complete' && levelComplete) advanceOrFinish();
   }
 
   // ---------- Input ----------
@@ -448,19 +475,9 @@
     if(e.code==='ArrowRight' || e.key==='d') keys.right=true;
     if(e.code==='Space' || e.key==='ArrowUp' || e.key==='w') keys.jump=true;
     if(e.key==='p' || e.key==='P') keys.pause=true;
-    if(e.key==='Enter') {
-      if(gameState==='start') startGame();
-      else if(gameState==='gameover') restartGame();
-      else if(gameState==='complete' && levelComplete){
-        if(currentLevel < levels.length-1){
-          currentLevel++;
-          loadLevel(currentLevel);
-          gameState='play';
-        }
-      }
-    }
+    if(e.key==='Enter') handlePrimaryAction();
     if(e.key==='r' || e.key==='R'){
-      if(gameState!=='start') restartGame();
+      restartGame();
     }
     if(e.key==='m' || e.key==='M'){
       muteBtn.click();
@@ -491,6 +508,8 @@
   setTouch(btnRight,touchRight);
   setTouch(btnJump,touchJump);
   setTouch(btnPause,touchPause);
+  canvas.addEventListener('pointerdown', handlePrimaryAction);
+  btnJump.addEventListener('pointerdown', handlePrimaryAction);
 
   // ---------- Physics ----------
   function applyPhysics(){
@@ -510,8 +529,9 @@
     if(hero.vx>MAX_SPEED) hero.vx=MAX_SPEED;
     if(hero.vx<-MAX_SPEED) hero.vx=-MAX_SPEED;
 
-    const jump = keys.jump || touchJump.value;
-    if(jump){
+    const jumpHeld = keys.jump || touchJump.value;
+    const jumpPressed = jumpHeld && !prevJump;
+    if(jumpPressed){
       if(hero.onGround){
         hero.vy = -JUMP_POWER;
         hero.onGround=false;
@@ -519,16 +539,20 @@
         hero.state='jump';
         hero.jumpsUsed=1;
         SFX.jump();
-      } else if(doubleJumpActive && hero.jumpsUsed<2 && hero.vy>0){
+      } else if(doubleJumpActive && hero.jumpsUsed<2){
         hero.vy = -JUMP_POWER;
         hero.jumpsUsed++;
         hero.state='jump';
+        jumpHoldTimer=0;
         SFX.jump();
-      } else if(jumpHoldTimer<MAX_JUMP_HOLD && hero.vy<0){
-        hero.vy -= 0.3;
-        jumpHoldTimer++;
       }
     }
+    if(jumpHeld && jumpHoldTimer<MAX_JUMP_HOLD && hero.vy<0){
+      hero.vy -= 0.3;
+      jumpHoldTimer++;
+    }
+    if(!jumpHeld) jumpHoldTimer = MAX_JUMP_HOLD;
+    prevJump = jumpHeld;
 
     hero.vy += GRAVITY;
     hero.x += hero.vx;
@@ -556,11 +580,9 @@
         spawnDust(hero.x+hero.w/2, p.y);
       }
     });
-    if(!hero.onGround && hero.y>canvas.height){
-      hero.y = canvas.height - hero.h;
-      hero.vy = 0;
-      hero.onGround=true;
-      landed=true;
+    if(hero.y > viewH + 220){
+      loseLife('pit');
+      return;
     }
 
     // Collectibles
@@ -666,18 +688,7 @@
       if(overlapX && overlapY){
         if(e.type==='rogueArchitect'){
           if(e.shieldActive){
-            if(invulnTimer===0 && shieldTimer===0){
-              lives--;
-              invulnTimer = 120;
-              hero.vx = -hero.facing * 3;
-              hero.vy = -5;
-              flashMessage = 'HIT!';
-              flashTimer = 60;
-              SFX.damage();
-              shakeTimer = 20;
-              shakeIntensity = 6;
-              if(lives<=0) gameState='gameover';
-            }
+            loseLife('enemy');
           } else {
             if(hero.vy > 0 && heroPrevBottom <= enemyTop){
               e.stompCount++;
@@ -688,27 +699,13 @@
               SFX.stomp();
               if(e.stompCount>=3){
                 e.alive = false;
-                flashMessage = 'Architecture restored. Contract validated.';
+                flashMessage = 'Architecture restored. Gate unlocked.';
                 flashTimer = 120;
-                matrixGate.reached = true;
-                levelComplete = true;
-                gameState = 'complete';
                 SFX.levelComplete();
                 shakeTimer = 30;
                 shakeIntensity = 8;
               }
-            } else if(invulnTimer===0 && shieldTimer===0){
-              lives--;
-              invulnTimer = 120;
-              hero.vx = -hero.facing * 3;
-              hero.vy = -5;
-              flashMessage = 'HIT!';
-              flashTimer = 60;
-              SFX.damage();
-              shakeTimer = 20;
-              shakeIntensity = 6;
-              if(lives<=0) gameState='gameover';
-            }
+            } else loseLife('enemy');
           }
         } else {
           if(hero.vy > 0 && heroPrevBottom <= enemyTop){
@@ -718,17 +715,8 @@
             flashTimer = 60;
             spawnEnemyDefeatEffect(e.x+e.w/2, e.y+e.h/2);
             SFX.stomp();
-          } else if(invulnTimer===0 && shieldTimer===0){
-            lives--;
-            invulnTimer = 120;
-            hero.vx = -hero.facing * 3;
-            hero.vy = -5;
-            flashMessage = 'HIT!';
-            flashTimer = 60;
-            SFX.damage();
-            shakeTimer = 20;
-            shakeIntensity = 6;
-            if(lives<=0) gameState='gameover';
+          } else {
+            loseLife('enemy');
           }
         }
       }
@@ -764,17 +752,23 @@
     }
 
     // Matrix Gate
-    if(!matrixGate.reached &&
-       hero.x+hero.w>matrixGate.x &&
+    const touchingGate = hero.x+hero.w>matrixGate.x &&
        hero.x<matrixGate.x+matrixGate.w &&
        hero.y+hero.h>matrixGate.y &&
-       hero.y<matrixGate.y+matrixGate.h){
-      matrixGate.reached = true;
-      levelComplete = true;
-      gameState = 'complete';
-      SFX.levelComplete();
-      shakeTimer = 30;
-      shakeIntensity = 8;
+       hero.y<matrixGate.y+matrixGate.h;
+    const bossAlive = enemies.some(e => e.type==='rogueArchitect' && e.alive);
+    if(!matrixGate.reached && touchingGate){
+      if(bossAlive){
+        flashMessage = 'Defeat the Rogue Architect first';
+        flashTimer = 60;
+      } else {
+        matrixGate.reached = true;
+        levelComplete = true;
+        gameState = 'complete';
+        SFX.levelComplete();
+        shakeTimer = 30;
+        shakeIntensity = 8;
+      }
     }
 
     // State transitions
@@ -841,7 +835,7 @@
 
   // ---------- Drawing ----------
   function drawSky(){
-    const grad = safeLinearGradient(0,0,0,canvas.height);
+    const grad = safeLinearGradient(0,0,0,viewH);
     if(grad){
       grad.addColorStop(0,SKY_TOP);
       grad.addColorStop(1,SKY_BOTTOM);
@@ -849,10 +843,10 @@
     } else {
       ctx.fillStyle=SKY_TOP;
     }
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(0,0,viewW,viewH);
     ctx.fillStyle='rgba(255,255,255,0.15)';
     for(let i=0;i<8;i++){
-      const cx=(i*250+camera.x*0.3)%(canvas.width+200)-100;
+      const cx=(i*250+camera.x*0.3)%(viewW+200)-100;
       const cy=80+Math.sin(i)*20;
       ctx.beginPath();
       ctx.ellipse(cx,cy,80,30,0,0,Math.PI*2);
@@ -865,8 +859,8 @@
     {
       speed:0.2,
       color:'#222',
-      rects:[{x:0,y:canvas.height-150,w:canvas.width*2,h:150}],
-      windows:[{x:50,y:canvas.height-130,w:20,h:30}]
+      rects:[{x:0,y:viewH-150,w:viewW*2,h:150}],
+      windows:[{x:50,y:viewH-130,w:20,h:30}]
     }
   ];
 
@@ -904,11 +898,9 @@
         ctx.fillRect(sx,p.y+6,4,p.h-6);
         ctx.fillRect(sx+p.w-4,p.y+6,4,p.h-6);
         ctx.fillStyle='#558855';
-        for(let i=0;i<3;i++){
-          const tx=sx+Math.random()*p.w;
-          const ty=p.y+Math.random()*p.h;
-          ctx.fillRect(tx,ty,2,2);
-        }
+        (p.textureDots || []).forEach(dot=>{
+          ctx.fillRect(sx+dot.x,p.y+dot.y,2,2);
+        });
       } else if(p.type==='metal'){
         ctx.fillStyle='#222';
         ctx.fillRect(sx,p.y,p.w,p.h);
@@ -1174,26 +1166,35 @@
   }
 
   function drawHUD(){
-    const barHeight=40;
-    ctx.fillStyle='#111';
-    ctx.fillRect(0,0,canvas.width,barHeight);
-    ctx.fillStyle='#fff';
-    ctx.font='18px monospace';
+    const barHeight=64;
+    ctx.fillStyle='rgba(6,8,12,0.94)';
+    ctx.fillRect(0,0,viewW,barHeight);
+    ctx.strokeStyle='rgba(0,220,255,0.28)';
+    ctx.beginPath();
+    ctx.moveTo(0,barHeight-1);
+    ctx.lineTo(viewW,barHeight-1);
+    ctx.stroke();
+
+    const hudFont = viewW < 760 ? '14px monospace' : '18px monospace';
+    ctx.font=hudFont;
     ctx.textBaseline='middle';
-    ctx.fillText('CONTRACT',12,barHeight/2);
-    ctx.fillStyle='#ff8800';
-    ctx.fillText('QUEST',120,barHeight/2);
-    const stats=[`COINS ${String(coinsCollected).padStart(3,'0')}`,
-                 `SCORE ${String(score).padStart(6,'0')}`,
-                 `LIVES ${lives}`];
+    ctx.textAlign='left';
     ctx.fillStyle='#fff';
-    let offset=canvas.width-200;
-    stats.forEach(txt=>{
-      ctx.fillText(txt,offset,barHeight/2);
-      offset+=ctx.measureText(txt).width+30;
-    });
-    const badgeX=canvas.width-30;
-    const badgeY=barHeight/2;
+    ctx.fillText('CONTRACT',16,22);
+    ctx.fillStyle='#ff9500';
+    ctx.fillText('QUEST',126,22);
+
+    ctx.fillStyle='#fff';
+    ctx.textAlign='right';
+    const lockSpace = 52;
+    ctx.fillText(`LIVES ${lives}`, viewW-lockSpace, 22);
+    ctx.fillText(`SCORE ${String(score).padStart(6,'0')}`, viewW-lockSpace-108, 22);
+    if(viewW > 680){
+      ctx.fillText(`COINS ${String(coinsCollected).padStart(3,'0')}`, viewW-lockSpace-300, 22);
+    }
+    ctx.textAlign='left';
+    const badgeX=viewW-24;
+    const badgeY=22;
     ctx.fillStyle='#555';
     ctx.beginPath();
     ctx.arc(badgeX,badgeY,12,0,Math.PI*2);
@@ -1205,73 +1206,162 @@
     ctx.fill();
     ctx.fillStyle='#777';
     ctx.fillRect(badgeX-3,badgeY+2,6,6);
+
+    const lvl = levels[currentLevel];
+    if(lvl && gameState==='play'){
+      ctx.textAlign='center';
+      ctx.font=viewW < 760 ? '11px monospace' : '13px monospace';
+      ctx.fillStyle='#8ff';
+      const mission = `LEVEL ${currentLevel+1}: ${lvl.name} — ${lvl.objective}`;
+      ctx.fillText(mission, viewW/2, 49);
+      ctx.textAlign='left';
+    }
   }
 
   function drawFooter(){
     const barHeight=30;
-    const y=canvas.height-barHeight;
-    ctx.fillStyle='#111';
-    ctx.fillRect(0,y,canvas.width,barHeight);
+    const y=viewH-barHeight;
+    ctx.fillStyle='rgba(6,8,12,0.9)';
+    ctx.fillRect(0,y,viewW,barHeight);
     ctx.fillStyle='#ccc';
     ctx.font='14px monospace';
+    ctx.textAlign='center';
     ctx.textBaseline='middle';
-    const txt='coded by GitPilot — under a Matrix Builder contract';
-    const txtWidth=ctx.measureText(txt).width;
-    ctx.fillText(txt,(canvas.width-txtWidth)/2,y+barHeight/2);
+    const txt='coded by GitPilot - under a Matrix Builder contract';
+    ctx.fillText(txt,viewW/2,y+barHeight/2);
+    ctx.textAlign='left';
   }
 
   const rmdTips = ['RMD‑101', 'RMD‑103', 'RMD‑111'];
   let tipIndex = 0;
   let tipTimer = 0;
 
+  function fitFont(text, maxWidth, startSize, minSize=18){
+    let size = startSize;
+    do {
+      ctx.font = `${size}px "Press Start 2P", Arial Black, sans-serif`;
+      if(ctx.measureText(text).width <= maxWidth || size <= minSize) return size;
+      size -= 2;
+    } while(size >= minSize);
+    return minSize;
+  }
+
+  function fillWrappedText(text, x, y, maxWidth, lineHeight){
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    words.forEach(word=>{
+      const test = line ? `${line} ${word}` : word;
+      if(ctx.measureText(test).width > maxWidth && line){
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    });
+    if(line) lines.push(line);
+    lines.forEach((txt,i)=>ctx.fillText(txt,x,y+i*lineHeight));
+    return lines.length;
+  }
+
+  function drawTitleMark(centerX, y){
+    const maxWidth = Math.min(viewW - 80, 760);
+    const size = fitFont('CONTRACT QUEST', maxWidth, Math.min(72, viewW/12), 28);
+    ctx.font = `${size}px "Press Start 2P", Arial Black, sans-serif`;
+    const gap = Math.max(14, size*0.18);
+    const contractW = ctx.measureText('CONTRACT').width;
+    const questW = ctx.measureText('QUEST').width;
+    const startX = centerX - (contractW + gap + questW)/2;
+    ctx.textAlign='left';
+    ctx.fillStyle='#fff';
+    ctx.fillText('CONTRACT',startX,y);
+    ctx.fillStyle='#ff8a00';
+    ctx.fillText('QUEST',startX+contractW+gap,y);
+    ctx.textAlign='center';
+    return size;
+  }
+
   function drawOverlay(){
-    ctx.fillStyle='rgba(0,0,0,0.7)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(0,0,0,0.72)';
+    ctx.fillRect(0,0,viewW,viewH);
     ctx.fillStyle='#fff';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
     ctx.font='48px "Press Start 2P",sans-serif';
     if(gameState==='start'){
-      // Premium title
-      ctx.fillStyle='#fff';
-      ctx.font='64px "Press Start 2P",sans-serif';
-      ctx.fillText('CONTRACT',canvas.width/2-80,canvas.height/3);
-      ctx.fillStyle='#ff8800';
-      ctx.fillText('QUEST',canvas.width/2+80,canvas.height/3);
-      ctx.font='20px "Press Start 2P",sans-serif';
-      ctx.fillStyle='#fff';
+      const titleY = Math.max(112, viewH*0.24);
+      const titleSize = drawTitleMark(viewW/2,titleY);
       const subtitle='A governed arcade platformer built with GitPilot and watsonx under a Matrix Builder contract';
-      ctx.fillText(subtitle,canvas.width/2,canvas.height/3+70);
-      // rotating tip
+      ctx.font=`${Math.max(16, Math.min(22, viewW/58))}px "Press Start 2P", Arial, sans-serif`;
+      ctx.fillStyle='#f5f5f5';
+      const subtitleLines = fillWrappedText(subtitle,viewW/2,titleY+titleSize*0.9,Math.min(viewW-96,1120),30);
       if(tipTimer===0){
         tipIndex = (tipIndex+1)%rmdTips.length;
         tipTimer = 180;
       } else {
         tipTimer--;
       }
-      ctx.font='18px "Press Start 2P",sans-serif';
-      ctx.fillText(`TIP: ${rmdTips[tipIndex]}`,canvas.width/2,canvas.height/3+110);
-      // start prompt
-      ctx.font='24px "Press Start 2P",sans-serif';
-      ctx.fillText('Press Enter / Tap to Start',canvas.width/2,canvas.height/3+160);
+      ctx.font='18px "Press Start 2P", Arial, sans-serif';
+      ctx.fillText(`TIP: ${rmdTips[tipIndex]}`,viewW/2,titleY+titleSize*0.9+subtitleLines*30+28);
+      ctx.font='24px "Press Start 2P", Arial, sans-serif';
+      ctx.fillStyle='#fff';
+      ctx.fillText('Press Enter / Tap to Start',viewW/2,titleY+titleSize*0.9+subtitleLines*30+82);
+      ctx.font='16px "Press Start 2P", Arial, sans-serif';
+      ctx.fillStyle='#8ff';
+      ctx.fillText('Story: recover the contract, cross three audits, defeat the Rogue Architect.',viewW/2,titleY+titleSize*0.9+subtitleLines*30+124);
+      ctx.fillStyle='#ffd27a';
+      ctx.fillText('Controls: arrows/A-D move · Space/W/↑ jump · P pause · R restart',viewW/2,titleY+titleSize*0.9+subtitleLines*30+154);
     } else if(gameState==='pause'){
-      ctx.fillText('PAUSED',canvas.width/2,canvas.height/2);
+      ctx.fillText('PAUSED',viewW/2,viewH/2);
       ctx.font='20px "Press Start 2P",sans-serif';
-      ctx.fillText('Press P to Resume',canvas.width/2,canvas.height/2+40);
+      ctx.fillText('Press P to Resume',viewW/2,viewH/2+40);
     } else if(gameState==='complete'){
-      ctx.fillText(`LEVEL COMPLETE — ${levelName}`,canvas.width/2,canvas.height/2);
+      ctx.fillText(`LEVEL COMPLETE — ${levelName}`,viewW/2,viewH/2);
       ctx.font='20px "Press Start 2P",sans-serif';
-      ctx.fillText('Press Enter to Continue',canvas.width/2,canvas.height/2+40);
+      ctx.fillText(currentLevel < levels.length - 1 ? 'Press Enter / Tap to Continue' : 'Press Enter / Tap to Finish',viewW/2,viewH/2+40);
     } else if(gameState==='gameover'){
-      ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);
+      ctx.fillText('CONTRACT FAILED',viewW/2,viewH/2-30);
       ctx.font='20px "Press Start 2P",sans-serif';
-      ctx.fillText('Press R or Enter to Restart',canvas.width/2,canvas.height/2+40);
+      ctx.fillText(`Final Score: ${score}`,viewW/2,viewH/2+15);
+      ctx.fillText('Press R / Enter / Tap to Retry',viewW/2,viewH/2+55);
+    } else if(gameState==='win'){
+      ctx.fillText('CONTRACT VALIDATED!',viewW/2,viewH/2-50);
+      ctx.font='20px "Press Start 2P",sans-serif';
+      ctx.fillText('The Rogue Architect is defeated.',viewW/2,viewH/2);
+      ctx.fillText(`Final Score: ${score}`,viewW/2,viewH/2+40);
+      ctx.fillText('Press Enter / Tap to Play Again',viewW/2,viewH/2+80);
     }
     if(flashTimer>0){
       ctx.fillStyle='rgba(255,255,0,0.9)';
       ctx.font='30px "Press Start 2P",sans-serif';
-      ctx.fillText(flashMessage, canvas.width/2, canvas.height/2 - 80);
+      ctx.fillText(flashMessage, viewW/2, viewH/2 - 80);
     }
+  }
+
+
+  function drawLevelIntro(){
+    if(levelIntroTimer<=0 || gameState!=='play') return;
+    const lvl = levels[currentLevel];
+    const alpha = Math.min(0.92, levelIntroTimer/45);
+    const boxW = Math.min(viewW - 80, 820);
+    const boxH = 150;
+    const x = (viewW - boxW)/2;
+    const y = Math.max(90, viewH*0.18);
+    ctx.fillStyle=`rgba(5,10,18,${alpha})`;
+    ctx.fillRect(x,y,boxW,boxH);
+    ctx.strokeStyle=`rgba(0,220,255,${alpha})`;
+    ctx.strokeRect(x,y,boxW,boxH);
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillStyle=`rgba(255,255,255,${alpha})`;
+    ctx.font='24px "Press Start 2P", Arial Black, sans-serif';
+    ctx.fillText(`LEVEL ${currentLevel+1}: ${lvl.name}`, viewW/2, y+34);
+    ctx.font='16px "Press Start 2P", Arial, sans-serif';
+    fillWrappedText(lvl.story, viewW/2, y+72, boxW-60, 24);
+    ctx.fillStyle=`rgba(255,200,80,${alpha})`;
+    ctx.font='14px "Press Start 2P", Arial, sans-serif';
+    ctx.fillText(lvl.tip, viewW/2, y+128);
+    ctx.textAlign='left';
   }
 
   function drawParticles(){
@@ -1292,10 +1382,10 @@
   }
 
   function drawVignette(){
-    const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,
-      Math.min(canvas.width,canvas.height)/2*0.7,
-      canvas.width/2,canvas.height/2,
-      Math.min(canvas.width,canvas.height)/2);
+    const grad=ctx.createRadialGradient(viewW/2,viewH/2,
+      Math.min(viewW,viewH)/2*0.7,
+      viewW/2,viewH/2,
+      Math.min(viewW,viewH)/2);
     if(grad){
       grad.addColorStop(0,'rgba(0,0,0,0)');
       grad.addColorStop(1,'rgba(0,0,0,0.5)');
@@ -1303,8 +1393,36 @@
     } else {
       ctx.fillStyle='rgba(0,0,0,0.5)';
     }
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(0,0,viewW,viewH);
   }
+
+
+  window.__cqDebug = () => {
+    const ground = platforms.find(p => p.type === 'ground') || platforms[0] || {y:0,h:0};
+    return {
+      gameState,
+      currentLevel,
+      viewW,
+      viewH,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      dpr,
+      hero: {x:hero.x, y:hero.y, w:hero.w, h:hero.h},
+      ground: {x:ground.x, y:ground.y, w:ground.w, h:ground.h},
+      matrixGate: {x:matrixGate.x, y:matrixGate.y, w:matrixGate.w, h:matrixGate.h},
+      cameraX: camera.x,
+      hudVisible: viewW > 0 && viewH > 40,
+      gateOnScreen: matrixGate.x - camera.x < viewW && matrixGate.x - camera.x + matrixGate.w > 0
+    };
+  };
+  window.__cqDebugWarpToGate = () => {
+    if(!matrixGate || typeof matrixGate.x !== 'number') return;
+    hero.x = matrixGate.x - hero.w - 10;
+    hero.y = Math.max(60, matrixGate.y + matrixGate.h - hero.h);
+    hero.vx = 0;
+    hero.vy = 0;
+    camera.x = Math.max(0, matrixGate.x - viewW * 0.65);
+  };
 
   // ---------- Main Loop ----------
   function loop(){
@@ -1325,6 +1443,7 @@
     }
 
     if(flashTimer>0) flashTimer--;
+    if(levelIntroTimer>0 && gameState==='play') levelIntroTimer--;
 
     // screen shake
     let shakeX=0, shakeY=0;
@@ -1335,7 +1454,7 @@
 
     ctx.save();
     ctx.translate(shakeX, shakeY);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0,0,viewW,viewH);
     drawSky();
     drawSkyline();
     drawPlatforms();
@@ -1350,6 +1469,7 @@
     drawFooter();
     drawParticles();
     drawVignette();
+    drawLevelIntro();
     ctx.restore();
 
     // transition overlay
@@ -1363,7 +1483,7 @@
         transitionDir=0;
       }
       ctx.fillStyle=`rgba(0,0,0,${transitionAlpha})`;
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillRect(0,0,viewW,viewH);
     }
 
     if(gameState!=='play'){

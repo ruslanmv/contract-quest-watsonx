@@ -5,9 +5,7 @@ PYTHON ?= python3
 NPM ?= npm
 PORT ?= 8000
 HOST ?= 127.0.0.1
-GOVERNED_PYPI_TOOLS ?= agent-generator gitcopilot crewai
-MATRIX_BUILDER_REPO ?= git+https://github.com/agent-matrix/matrix-builder.git
-MATRIX_DESIGNER_REPO ?= git+https://github.com/ruslanmv/matrix-designer.git
+GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai matrix-builder matrix-designer
 
 .PHONY: help install install-node install-governed-tools build verify smoke design generate run clean
 
@@ -15,7 +13,7 @@ help:
 	@echo "Contract Quest workflow targets"
 	@echo ""
 	@echo "  make install                Install local npm dependencies and attempt governed Python tool install"
-	@echo "  make build                  Run ./build.sh generate (governed generation or sandbox fallback)"
+	@echo "  make build                  Run ./build.sh all (design artifact validation + local verification)"
 	@echo "  make verify                 Run ./build.sh verify"
 	@echo "  make smoke                  Run npm smoke script"
 	@echo "  make design                 Run ./build.sh design"
@@ -37,25 +35,16 @@ install-node:
 
 install-governed-tools:
 	@echo "==> Attempting governed workflow Python tool install"
-	@echo "    PyPI tools: $(GOVERNED_PYPI_TOOLS)"
-	@for tool in $(GOVERNED_PYPI_TOOLS); do \
-		echo "    Installing PyPI tool: $$tool"; \
-		$(PYTHON) -m pip install "$$tool" || echo "WARNING: $$tool could not be installed from PyPI."; \
-	done
-	@echo "    Matrix Builder repo: $(MATRIX_BUILDER_REPO)"
-	@$(PYTHON) -m pip install "$(MATRIX_BUILDER_REPO)" || { \
-		echo "WARNING: Matrix Builder could not be installed from its repository."; \
+	@echo "    Tools: $(GOVERNED_PY_TOOLS)"
+	@$(PYTHON) -m pip install $(GOVERNED_PY_TOOLS) || { \
+		echo "WARNING: governed Python tools could not be installed in this environment."; \
+		echo "         Local build/run targets still work with the checked-in static game."; \
+		echo "         Re-run in a network-enabled environment for full mb/gitpilot generation."; \
 	}
-	@echo "    Matrix Designer repo: $(MATRIX_DESIGNER_REPO)"
-	@$(PYTHON) -m pip install "$(MATRIX_DESIGNER_REPO)" || { \
-		echo "WARNING: Matrix Designer could not be installed from its repository."; \
-	}
-	@echo "==> Governed Python tool install step complete"
-	@echo "    If mb/mdesign/gitpilot are still unavailable, check network access and the repository URLs above."
 
 build:
 	@echo "==> Running governed build workflow"
-	@./build.sh generate
+	@./build.sh all
 
 verify:
 	@./build.sh verify

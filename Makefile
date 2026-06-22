@@ -5,11 +5,9 @@ PYTHON ?= python3
 NPM ?= npm
 PORT ?= 8000
 HOST ?= 127.0.0.1
-GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai
+GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai matrix-designer
 MATRIX_BUILDER_REPO ?= https://github.com/agent-matrix/matrix-builder.git
 MATRIX_BUILDER_DIR ?= .tools/matrix-builder
-MATRIX_DESIGNER_REPO ?= https://github.com/agent-matrix/matrix-designer.git
-MATRIX_DESIGNER_DIR ?= .tools/matrix-designer
 
 .PHONY: help install install-node install-governed-tools build verify smoke design generate run clean
 
@@ -41,7 +39,6 @@ install-governed-tools:
 	@echo "==> Attempting governed workflow Python tool install"
 	@echo "    PyPI tools: $(GOVERNED_PY_TOOLS)"
 	@echo "    Matrix Builder repo: $(MATRIX_BUILDER_REPO)"
-	@echo "    Matrix Designer repo: $(MATRIX_DESIGNER_REPO)"
 	@status=0; \
 	for tool in $(GOVERNED_PY_TOOLS); do \
 		$(PYTHON) -m pip install "$$tool" || status=$$?; \
@@ -55,23 +52,8 @@ install-governed-tools:
 		mkdir -p "$$(dirname "$(MATRIX_BUILDER_DIR)")"; \
 		git clone "$(MATRIX_BUILDER_REPO)" "$(MATRIX_BUILDER_DIR)" || status=$$?; \
 	fi; \
-	if [ -f "$(MATRIX_BUILDER_DIR)/requirements.txt" ]; then \
-		$(PYTHON) -m pip install -r "$(MATRIX_BUILDER_DIR)/requirements.txt" || status=$$?; \
-	fi; \
-	if [ -f "$(MATRIX_BUILDER_DIR)/Makefile" ]; then \
-		$(MAKE) -C "$(MATRIX_BUILDER_DIR)" bootstrap || status=$$?; \
-	fi; \
-	if [ -d "$(MATRIX_DESIGNER_DIR)/.git" ]; then \
-		echo "==> Updating Matrix Designer checkout"; \
-		git -C "$(MATRIX_DESIGNER_DIR)" pull --ff-only || status=$$?; \
-	else \
-		echo "==> Cloning Matrix Designer"; \
-		rm -rf "$(MATRIX_DESIGNER_DIR)"; \
-		mkdir -p "$$(dirname "$(MATRIX_DESIGNER_DIR)")"; \
-		git clone "$(MATRIX_DESIGNER_REPO)" "$(MATRIX_DESIGNER_DIR)" || status=$$?; \
-	fi; \
-	if [ -d "$(MATRIX_DESIGNER_DIR)" ]; then \
-		$(PYTHON) -m pip install "$(MATRIX_DESIGNER_DIR)" || status=$$?; \
+	if [ -d "$(MATRIX_BUILDER_DIR)" ]; then \
+		$(PYTHON) -m pip install "$(MATRIX_BUILDER_DIR)" || status=$$?; \
 	fi; \
 	if [ "$$status" -ne 0 ]; then \
 		echo "WARNING: governed Python tools could not be installed in this environment."; \

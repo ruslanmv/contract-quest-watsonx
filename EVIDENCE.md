@@ -29,3 +29,16 @@ contract panels, RMD star, gems, shield power-up, enemies and the robot hero all
 
 No API keys are committed. This project was built with **watsonx only**. The watsonx key used
 was temporary and has been rotated.
+
+## Current sandbox verification — 2026-06-22
+
+The current repository workflow was checked with the Makefile entry points requested for reproduction:
+
+- `make install` installed npm dependencies successfully.
+- The governed Python tool install step now tries PyPI packages individually and installs Matrix Builder / Matrix Designer from Git repositories instead of the non-existent `matrix-builder` PyPI package.
+- In this sandbox, PyPI and GitHub package access returned proxy `403` errors, so the Makefile emitted warnings and continued as designed.
+- `make build` now runs `./build.sh generate`. Because `mb` and `gitpilot` are unavailable in this sandbox, `build.sh` used the documented local fallback: it validated the checked-in Matrix Designer bundle and Matrix export, then verified the static `frontend/index.html` production artifact.
+- `npm run build` and `npm run verify` passed through `scripts/verify-static.js`.
+- `npm run smoke` exited with the expected Playwright-missing skip message because `@playwright/test` and browser binaries are not installed in this sandbox.
+
+A fully provisioned environment with Matrix Builder, GitPilot, watsonx credentials, and network access should run the governed batch path through `make build` / `./build.sh generate`. Set `REQUIRE_GOVERNED_TOOLS=1` to fail instead of using the local fallback.

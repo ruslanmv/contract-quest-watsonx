@@ -1,115 +1,171 @@
-<div align="center">
-
-<h1>🛡️ Contract Quest</h1>
-<h3>A governed arcade platformer built with GitPilot and watsonx under a Matrix Builder contract.</h3>
-
-<p><b>openai/gpt-oss-120b</b> (on <b>IBM watsonx.ai</b>), driven by <a href="https://gitpilot.ruslanmv.com">GitPilot</a>, wrote <code>frontend/index.html</code> across <b>6 governed batches</b> (+ a repair) — and <i>only</i> that file — each bound by a <a href="https://github.com/agent-matrix/matrix-builder">Matrix Builder</a> contract and validated by <code>mb check</code> before it could land. Governed by the <b>Ruslan Magana Definitions (RMD)</b>.</p>
-
-<p>
-  <a href="https://ruslanmv.com/contract-quest-watsonx/"><img src="https://img.shields.io/badge/%E2%96%B6_PLAY_NOW-ffa500?style=for-the-badge&amp;labelColor=14110a&amp;color=ffa500" alt="Play now"></a>
-  &nbsp;
-  <a href="EVIDENCE.md"><img src="https://img.shields.io/badge/watsonx_only-7_batches_approved-0f62fe?style=for-the-badge&amp;labelColor=14110a" alt="watsonx only"></a>
-</p>
-
-<p>
-  <img src="https://img.shields.io/badge/coded_by-gpt--oss--120b-10a37f?style=flat-square&amp;labelColor=1C1C1F" alt="gpt-oss-120b">
-  <img src="https://img.shields.io/badge/on-IBM_watsonx.ai-0f62fe?style=flat-square&amp;labelColor=1C1C1F" alt="watsonx">
-  <img src="https://img.shields.io/badge/driver-GitPilot-D95C3D?style=flat-square&amp;labelColor=1C1C1F" alt="GitPilot">
-  <img src="https://img.shields.io/badge/contract-Matrix_Builder-ffb000?style=flat-square&amp;labelColor=1C1C1F" alt="Matrix Builder">
-  <img src="https://img.shields.io/badge/governance-RMD-8A63D2?style=flat-square&amp;labelColor=1C1C1F" alt="RMD">
-  <img src="https://img.shields.io/badge/license-MIT-3ddc97?style=flat-square&amp;labelColor=1C1C1F" alt="MIT">
-</p>
-
-<img src="assets/screenshot.png" alt="Contract Quest — the real game running" width="760">
-
-</div>
-
+---
+title: "Contract Quest: Building a Governed Arcade Game with Matrix Designer, Matrix Builder, GitPilot, and watsonx.ai"
+excerpt: "A reproducible tutorial for creating Contract Quest from zero: Matrix Designer designs the game, Matrix Builder governs the batches, GitPilot writes the code, and openai/gpt-oss-120b on IBM watsonx.ai implements a static browser platformer for Vercel."
+description: "Step-by-step tutorial for creating Contract Quest as a governed browser game with deterministic art, generated WebAudio, mobile controls, Playwright smoke tests, and release evidence."
+date: 2026-06-21
+permalink: /blog/contract-quest-watsonx/
+tags:
+  - matrix-designer
+  - matrix-builder
+  - gitpilot
+  - watsonx
+  - gpt-oss
+  - game-dev
+  - vercel
+  - webaudio
+  - qa
 ---
 
-> **Contract Quest is an original browser arcade platformer built with GitPilot using watsonx only, governed by Matrix Builder contracts and the Ruslan Magana Definitions.**
+# Contract Quest
 
-## 🛡️ [Play it now → ruslanmv.com/contract-quest-watsonx](https://ruslanmv.com/contract-quest-watsonx/)
+Contract Quest is a zero-backend browser arcade game and a reproducible AI production workflow. The game runs from `frontend/index.html`, but the important artifact is the pipeline:
 
-No install, no build. **Mobile + desktop.** Run, jump (variable height), stomp **Bug Bots** and **Prompt Slimes**, collect **Contract Coins**, grab the glowing blue **RMD Star** and **Validation Gems**, use **Shield** and **Double Jump** power-ups, save at **checkpoints**, and reach the **Matrix Gate** to validate the contract — across **three levels** and a **Rogue Architect** mini-boss.
+```text
+design the product
+govern the implementation
+generate the code
+verify the result
+publish with evidence
+```
 
-**Controls** — `←/→` or `A/D` move · `Space/W/↑` jump · `P` pause · `R` restart · `Enter` start. On touch devices, on-screen buttons appear.
+The workflow starts with **Matrix Designer**, converts the design into **Matrix Builder** batches, uses **GitPilot** with `openai/gpt-oss-120b` on **IBM watsonx.ai**, and verifies the static Vercel-ready game with npm and Playwright checks.
 
+## What the game is
 
-## Deploy on Vercel
+Contract Quest is a static canvas platformer where a robot hero runs through a contract-themed pixel world, collects Contract Coins and Validation Gems, reads RMD panels, activates checkpoints, uses Shield and Double Jump power-ups, fights Bug Bots and Prompt Slimes, and finally defeats the Rogue Architect before entering the Matrix Gate.
 
-This repository is now configured as a zero-backend static web game for Vercel. The playable app lives in [`frontend/index.html`](frontend/index.html), while [`vercel.json`](vercel.json) tells Vercel to publish the `frontend` directory after running a lightweight static verification step.
+Production goals:
 
-### One-click / dashboard deployment
+- original deterministic programmatic art;
+- desktop keyboard and mobile/touch controls;
+- logical viewport scaling for DPR 1 and DPR 2;
+- checkpoints, Matrix Gates, power-ups, enemies, boss gating, win/game-over states;
+- generated lazy WebAudio SFX/music with no MP3/WAV dependency;
+- static deployment on Vercel with no backend credentials;
+- local verification and Playwright smoke evidence.
 
-1. Push this repository to GitHub, GitLab, or Bitbucket.
-2. In Vercel, choose **Add New → Project** and import the repository.
-3. Keep the detected settings, or set them manually:
-   - **Framework Preset:** Other
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `frontend`
-4. Click **Deploy**. Vercel serves `frontend/index.html` at the generated production URL so anyone can play in a browser.
+## Repository layout
 
-### CLI deployment
+| Path | Purpose |
+|---|---|
+| `design/contract-quest-design-bundle.json` | Matrix Designer product contract: goals, architecture, entity contracts, acceptance criteria, batch roadmap, and repair policy. |
+| `design/contract-quest-mb-export.json` | Matrix Builder-ready export used by `build.sh generate`. |
+| `frontend/index.html` | Current static single-file canvas implementation. |
+| `scripts/verify-static.js` | Fail-closed static verifier for design/export/Vercel/game markers. |
+| `scripts/run-smoke.js` | Playwright smoke runner that skips safely when Playwright is not installed. |
+| `tests/playability.spec.js` | DPR and gameplay smoke tests. |
+| `MATRIX_*.md`, `MATRIX_BLUEPRINT.yaml` | Matrix Builder governance files. |
+| `build.sh` | Reproducible workflow runner. |
+| `EVIDENCE.md` | Evidence log for claims and release checks. |
+
+## Reproduce locally
+
+```bash
+make install
+make build
+make run
+```
+
+The Makefile wraps the workflow for day-to-day use: `make install` installs npm dependencies, installs PyPI tools (`agent-generator`, `gitcopilot`, `crewai`), and installs Matrix Builder/Matrix Designer from their Git repositories because Matrix Builder is not published as a PyPI package. `make build` runs `./build.sh generate`, so a fully provisioned machine executes the Matrix Designer → Matrix Builder → GitPilot/watsonx batch workflow; in a restricted sandbox it validates the checked-in design artifacts and static production game fallback. `make run` serves the created static game from `frontend/`. You can still call npm scripts directly:
 
 ```bash
 npm install
 npm run build
+npm run verify
+npm run smoke
+```
+
+`npm run smoke` runs Playwright when `@playwright/test` and browser binaries are installed. In a minimal sandbox, it prints a clear skip message instead of failing because browser tooling is absent.
+
+## Configure watsonx/GitPilot
+
+Do not commit secrets. `build.sh` reads variables from the shell or `.env` and accepts both canonical names and local aliases:
+
+```bash
+PROJECT_ID=<your watsonx project id>
+WATSONX_PROJECT_ID=<your watsonx project id>
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
+WATSONX_API_KEY=<your IBM Cloud key>
+WATSXON_API_KEY=<legacy typo also accepted>
+GITPILOT_PROVIDER=watsonx
+GITPILOT_WATSONX_MODEL=openai/gpt-oss-120b
+GITPILOT_MAX_TOKENS=24000
+```
+
+The deployed game does not need these variables. They are only for governed regeneration through GitPilot and watsonx.ai.
+
+## build.sh modes
+
+```bash
+./build.sh verify
+./build.sh design
+GENERATE_DRY_RUN=1 ./build.sh generate
+./build.sh generate
+./build.sh all
+```
+
+| Mode | Behavior |
+|---|---|
+| `verify` | Installs npm dependencies, runs build/verify/smoke scripts when present. |
+| `design` | Validates the Matrix Designer bundle with `mdesign` when available, otherwise validates the local JSON artifacts. |
+| `generate` | Validates design, checks `mb`, `gitpilot`, `python3`, and watsonx environment variables, then runs every exported Matrix batch. |
+| `all` | Runs design validation and local verification. |
+
+Use `GENERATE_DRY_RUN=1 ./build.sh generate` to print the exported batch plan without invoking Matrix Builder or GitPilot. In a sandbox that does not have `mb` or `gitpilot`, `./build.sh generate` falls back to the checked-in design artifacts and static game so verification can still prove the reproducible local artifact; set `REQUIRE_GOVERNED_TOOLS=1` to fail instead of using that fallback.
+
+## Matrix Designer-first workflow
+
+1. Matrix Designer creates `design/contract-quest-design-bundle.json`.
+2. Matrix Designer exports `design/contract-quest-mb-export.json`.
+3. Matrix Builder uses the export to scope allowed files and validation.
+4. GitPilot sends each scoped batch to `openai/gpt-oss-120b` on IBM watsonx.ai.
+5. Each batch runs `npm run build`, `npm run verify`, optional `npm run smoke`, and `mb check`.
+6. Evidence is recorded before any release claim is made.
+
+## Batch roadmap
+
+| # | Batch | Must validate |
+|---|---|---|
+| D-1 | Design Bundle | design validates and exports |
+| 0 | Contract reset + scaffold | package scripts, Vercel config, static shell |
+| 1 | Framework foundation | logical viewport and debug hooks |
+| 2 | Art and asset pipeline | original deterministic visual target |
+| 3 | Level and story model | three-level campaign metadata |
+| 4 | Hero movement | jump edge/hold, collision, death/respawn semantics |
+| 5 | Rewards, panels, HUD, gates | collectibles and Matrix Gate transitions |
+| 6 | Enemies and power-ups | central damage path, Shield, Double Jump |
+| 7 | Boss/finale | Rogue Architect cannot be skipped |
+| 8 | Audio/atmosphere | lazy WebAudio, generated music/SFX |
+| 9 | Mobile/accessibility | touch start/jump and responsive HUD |
+| 10 | QA/evidence/release | claims match evidence |
+
+The full machine-readable version lives in `design/contract-quest-design-bundle.json` and `design/contract-quest-mb-export.json`.
+
+## Deployment
+
+`vercel.json` publishes the static `frontend` directory after `npm run build`:
+
+```bash
+npm run build
 npx vercel deploy --prod
 ```
 
-No server, database, environment variables, or IBM watsonx credentials are required to host the already-generated game. The watsonx variables documented below are only needed if you want to regenerate the game source with `build.sh`.
+No server, database, auth, runtime watsonx credential, or API key is required to play the deployed game.
 
-## Built with watsonx only, under contract
+## Evidence policy
 
-The whole game was generated by **`openai/gpt-oss-120b`** running on **IBM watsonx.ai**, through GitPilot, one governed batch at a time. Every batch was scoped to a single allowed file and validated before commit:
+Do not claim production readiness, public deployment success, zero runtime errors, Matrix approval, or mobile/desktop completeness unless current evidence exists in `EVIDENCE.md` and matches the repository state.
 
-| # | Batch | Added | Matrix Commit |
-|---|---|---|---|
-| 1 | Foundation | sunset parallax world, pixel platforms, robot hero, camera, HUD | `mc-e6d47e6c8aaa` |
-| 2 | Controls & feel | run/jump (variable), hero states, screens, mobile, richer art | `mc-7ad8c97617c2` |
-| 3 | Collectibles & panels | coin arcs, **RMD Star**, gems, the 3 contract panels, checkpoint, **Matrix Gate** | `mc-fe876adffcb6` |
-| 4 | Enemies & power-ups | Bug Bot, Prompt Slime, stomp/damage/lives, **Shield**, **Double Jump** | `mc-a9d39d15b1b5` |
-| 5 | Levels & boss | 3 levels, **Rogue Architect** mini-boss, RMD rule signs/tips | `mc-8210d33b3004` |
-| 6 | Polish | particles, screen-shake, WebAudio + mute, transitions, title, responsive | `mc-97e2f86b640e` |
-| — | Repair | fixed a non-finite gradient crash (model fixed its own code) | `mc-53fa95a0ecf0` |
+## Definition of done
 
-Every batch: `MATRIX_STATUS: approved score=100`, the model wrote to **only `frontend/index.html`**, and a headless smoke test confirmed **zero runtime errors**. Full transcript in [`EVIDENCE.md`](EVIDENCE.md).
+Contract Quest is publishable only when all required evidence is current:
 
-## RMD governance
-
-The **Ruslan Magana Definitions** are woven into the world as signs, loading tips, and gate messages:
-
-- **RMD-101** — AI coders are workers, not architects.
-- **RMD-103** — Control files are protected.
-- **RMD-111** — Acceptance criteria are law.
-
-The contract identity lives in [`MATRIX_BLUEPRINT.yaml`](MATRIX_BLUEPRINT.yaml), [`MATRIX_STANDARDS.lock`](MATRIX_STANDARDS.lock), [`MATRIX_ALLOWED_CHANGES.md`](MATRIX_ALLOWED_CHANGES.md), [`MATRIX_ACCEPTANCE_CRITERIA.md`](MATRIX_ACCEPTANCE_CRITERIA.md), [`MATRIX_TASKS.md`](MATRIX_TASKS.md), and [`MATRIX_VALIDATION.md`](MATRIX_VALIDATION.md).
-
-## Reproduce it (watsonx only) — the cinematic re-run
-
-`build.sh` rebuilds the whole single-file game **from scratch in 8 governed batches**, each coded by
-`openai/gpt-oss-120b` on watsonx through GitPilot and validated by `mb check` before it lands. The
-batch specs are tuned for a **cinematic** look (parallax lit-window city, sun glow, pixel tiles,
-embers, lanterns, vignette) — and the loop is **self-repairing**: if a batch truncates or returns
-`needs-repair`, it retries up to 3× with a rising token budget, snapshotting the last-good file so a
-single flaky batch can never corrupt or abort the run.
-
-```bash
-git clone https://github.com/ruslanmv/contract-quest-watsonx
-cd contract-quest-watsonx
-pip install agent-generator gitcopilot crewai
-export GITPILOT_PROVIDER=watsonx
-export WATSONX_API_KEY=<your key>  WATSONX_PROJECT_ID=<your project>
-export GITPILOT_WATSONX_MODEL=openai/gpt-oss-120b
-./build.sh      # rebuilds frontend/index.html, validated batch by batch
-```
-
-No API keys are committed. This project is built with **watsonx only**.
-
-## Note on art
-
-All art is **original**, drawn programmatically on canvas — no Mario/Nintendo/Doodle-Jump or any protected assets. It's a stylized take on the concept; a single open model drawing pixel art in code won't photo-match a concept render, but the composition, mechanics, and governance are all here.
-
----
-
-<div align="center"><sub>A watsonx-built governed arcade platformer · Built by <a href="https://ruslanmv.com">Ruslan Magana Vsevolodovna</a> · MIT licensed · coded by GitPilot — under a Matrix Builder contract</sub></div>
+- design bundle exists and validates;
+- Matrix export contains the governed batch plan;
+- `npm run build` passes;
+- `npm run verify` passes;
+- `npm run smoke` passes in a Playwright-enabled environment or records a sandbox limitation;
+- boss gate cannot be completed while `bossAlive` is true;
+- audio initializes only after a user gesture;
+- Vercel production URL returns HTTP 200 without authentication;
+- screenshots and release notes are generated from the verified build.

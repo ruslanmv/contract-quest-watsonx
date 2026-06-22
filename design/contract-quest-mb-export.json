@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "source_design_bundle": "design/contract-quest-design-bundle.json",
+  "matrix_builder": {
+    "project": "Contract Quest",
+    "provider": "watsonx",
+    "model": "openai/gpt-oss-120b",
+    "default_verification": [
+      "npm run build",
+      "npm run verify",
+      "npm run smoke",
+      "mb check"
+    ],
+    "batches": [
+      {
+        "id": "D-1-design",
+        "title": "Design Bundle",
+        "allowed_files": [
+          "design/contract-quest-design-bundle.json",
+          "design/contract-quest-mb-export.json",
+          "design/README.md"
+        ],
+        "acceptance": "mdesign validate passes"
+      },
+      {
+        "id": "00-contract-scaffold",
+        "title": "Contract reset and scaffold",
+        "allowed_files": [
+          "MATRIX_BLUEPRINT.yaml",
+          "MATRIX_TASKS.md",
+          "MATRIX_ACCEPTANCE_CRITERIA.md",
+          "MATRIX_VALIDATION.md",
+          "MATRIX_ALLOWED_CHANGES.md",
+          "package.json",
+          "vercel.json",
+          "frontend/index.html",
+          "scripts/verify-static.js",
+          "tests/**",
+          "README.md"
+        ],
+        "acceptance": "npm run build and npm run verify pass"
+      },
+      {
+        "id": "01-framework",
+        "title": "Framework foundation and viewport invariant",
+        "allowed_files": [
+          "frontend/index.html",
+          "scripts/verify-static.js",
+          "tests/**"
+        ],
+        "acceptance": "DPR 1 and DPR 2 debug state is sane"
+      },
+      {
+        "id": "02-art",
+        "title": "Art direction and deterministic asset pipeline",
+        "allowed_files": [
+          "frontend/index.html",
+          "scripts/verify-static.js",
+          "tests/**"
+        ],
+        "acceptance": "original deterministic art markers remain"
+      },
+      {
+        "id": "03-levels",
+        "title": "Level and story model",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**",
+          "README.md"
+        ],
+        "acceptance": "three-level campaign metadata exists"
+      },
+      {
+        "id": "04-hero",
+        "title": "Hero movement, physics, death, and respawn",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**"
+        ],
+        "acceptance": "jump edge and pit/respawn markers exist"
+      },
+      {
+        "id": "05-rewards-gates",
+        "title": "Rewards, panels, HUD, and Matrix Gates",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**"
+        ],
+        "acceptance": "collectibles and gates are explicit"
+      },
+      {
+        "id": "06-enemies-powerups",
+        "title": "Enemies and power-ups",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**"
+        ],
+        "acceptance": "central damage and power-up behavior remains testable"
+      },
+      {
+        "id": "07-boss",
+        "title": "Rogue Architect boss and final validation",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**"
+        ],
+        "acceptance": "final gate is locked while bossAlive is true"
+      },
+      {
+        "id": "08-audio-polish",
+        "title": "WebAudio music, SFX, and atmosphere",
+        "allowed_files": [
+          "frontend/index.html",
+          "scripts/verify-static.js",
+          "tests/**"
+        ],
+        "acceptance": "audio initializes only after user gesture"
+      },
+      {
+        "id": "09-mobile-a11y",
+        "title": "Mobile controls, accessibility, and UX polish",
+        "allowed_files": [
+          "frontend/index.html",
+          "tests/**"
+        ],
+        "acceptance": "touch start and jump work"
+      },
+      {
+        "id": "10-evidence-release",
+        "title": "QA, evidence, tutorial, and release package",
+        "allowed_files": [
+          "README.md",
+          "EVIDENCE.md",
+          "build.sh",
+          "scripts/**",
+          "tests/**"
+        ],
+        "acceptance": "claims match evidence"
+      }
+    ]
+  },
+  "shared_prompt_header": "You are implementing a Matrix Designer-designed Contract Quest production batch. Follow the design bundle and Matrix export, stay in the allowed files, preserve logical viewport coordinates, jumpPressed/jumpHeld separation, boss-gate lock, lazy generated WebAudio, and evidence-backed claims."
+}

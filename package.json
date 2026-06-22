@@ -7,7 +7,8 @@
     "build": "node scripts/verify-static.js",
     "dev": "npx serve frontend",
     "start": "npx serve frontend",
-    "verify": "node scripts/verify-static.js"
+    "verify": "node scripts/verify-static.js",
+    "smoke": "node scripts/run-smoke.js"
   },
   "engines": {
     "node": ">=18"

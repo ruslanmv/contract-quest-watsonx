@@ -81,28 +81,75 @@
 
   // ---------- Audio ----------
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext();
-  const masterGain = audioCtx.createGain();
-  masterGain.connect(audioCtx.destination);
-  masterGain.gain.value = 1;
+  let audioCtx = null;
+  let masterGain = null;
+  let musicGain = null;
+  let sfxGain = null;
   let muted = false;
+  let userGestureSeen = false;
+  let musicStarted = false;
   const muteBtn = document.getElementById('mute-btn');
+
+  function initAudio(){
+    if(audioCtx || !AudioContext) return audioCtx;
+    audioCtx = new AudioContext();
+    masterGain = audioCtx.createGain();
+    musicGain = audioCtx.createGain();
+    sfxGain = audioCtx.createGain();
+    musicGain.gain.value = 0.035;
+    sfxGain.gain.value = 1;
+    masterGain.gain.value = muted ? 0 : 1;
+    musicGain.connect(masterGain);
+    sfxGain.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+    return audioCtx;
+  }
+
+  function resumeAudio(){
+    userGestureSeen = true;
+    const ctx = initAudio();
+    if(ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    return ctx;
+  }
+
+  function startMusic(){
+    const ctx = resumeAudio();
+    if(!ctx || musicStarted || muted) return;
+    musicStarted = true;
+    const notes = [164.81, 196.00, 246.94, 329.63];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i % 2 ? 'triangle' : 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + i * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.08 + 0.22);
+      osc.connect(gain).connect(musicGain);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.24);
+    });
+  }
+
   muteBtn.addEventListener('click', () => {
     muted = !muted;
-    masterGain.gain.value = muted ? 0 : 1;
+    if(masterGain) masterGain.gain.value = muted ? 0 : 1;
     muteBtn.textContent = muted ? '🔇' : '🔊';
   });
+
   function playTone(freq, duration, type='square', vol=0.1){
     if(muted) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = resumeAudio();
+    if(!ctx || !sfxGain) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.frequency.value = freq;
     osc.type = type;
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain).connect(masterGain);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain).connect(sfxGain);
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
   }
   const SFX = {
     jump:()=>playTone(300,0.12, 'sawtooth',0.15),
@@ -472,6 +519,8 @@
   }
 
   function handlePrimaryAction(){
+    resumeAudio();
+    startMusic();
     if(gameState==='start') startGame();
     else if(gameState==='gameover') restartGame();
     else if(gameState==='complete' && levelComplete) advanceOrFinish();
@@ -1405,7 +1454,8 @@
       matrixGate: {x:matrixGate.x, y:matrixGate.y, w:matrixGate.w, h:matrixGate.h},
       cameraX: camera.x,
       hudVisible: viewW > 0 && viewH > 40,
-      gateOnScreen: matrixGate.x - camera.x < viewW && matrixGate.x - camera.x + matrixGate.w > 0
+      gateOnScreen: matrixGate.x - camera.x < viewW && matrixGate.x - camera.x + matrixGate.w > 0,
+      audio: { initialized: !!audioCtx, userGestureSeen, musicPlaying: musicStarted && !muted, muted }
     };
   };
   window.__cqDebugWarpToGate = () => {

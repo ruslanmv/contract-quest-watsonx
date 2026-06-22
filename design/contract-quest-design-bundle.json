@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0",
+  "project": "Contract Quest",
+  "goal_analysis": {
+    "game": "Contract Quest",
+    "target": "premium static browser platformer",
+    "deployment": "Vercel static hosting",
+    "constraints": [
+      "Matrix Designer-first workflow",
+      "Matrix Builder-governed batches",
+      "GitPilot code generation",
+      "IBM watsonx.ai provider with openai/gpt-oss-120b",
+      "original deterministic art",
+      "generated lazy WebAudio music and SFX",
+      "desktop and mobile controls",
+      "Playwright smoke evidence"
+    ]
+  },
+  "framework_decision": {
+    "selected": "single-file canvas fallback",
+    "recommended_future": "Phaser 3 + Vite + TypeScript",
+    "reason": "The current repository already ships a static single-file canvas game through frontend/index.html; the design keeps the static Vercel target reproducible while documenting the Phaser production path for future modular rebuilds."
+  },
+  "visual_target": {
+    "style": "warm governed arcade pixel quest",
+    "quality_bar": "layered parallax, readable HUD, deterministic decoration, no protected assets, no per-frame shimmer for stable world art",
+    "forbidden": [
+      "protected assets",
+      "famous platformer imitation",
+      "external audio dependencies",
+      "runtime watsonx credentials in the deployed game"
+    ]
+  },
+  "architecture": {
+    "runtime": "frontend/index.html",
+    "systems": [
+      "Viewport",
+      "Input",
+      "Physics",
+      "LevelModel",
+      "HUD",
+      "AudioBus",
+      "Particles",
+      "Progression",
+      "DebugHooks"
+    ],
+    "debug_hooks": [
+      "window.__cqDebug",
+      "window.__cqDebugWarpToGate"
+    ]
+  },
+  "contracts": {
+    "hero": [
+      "run",
+      "jumpPressed edge",
+      "jumpHeld variable height",
+      "checkpoint respawn",
+      "pit death"
+    ],
+    "levels": [
+      "Tutorial Field",
+      "Traversal Cavern",
+      "Boss Arena"
+    ],
+    "collectibles": [
+      "Contract Coins",
+      "Validation Gems",
+      "RMD Star"
+    ],
+    "enemies": [
+      "Bug Bots",
+      "Prompt Slimes"
+    ],
+    "boss": [
+      "Rogue Architect",
+      "shield phases",
+      "three stomp defeat",
+      "gate lock while bossAlive"
+    ],
+    "audio": [
+      "lazy WebAudio after gesture",
+      "generated music",
+      "mute persistence",
+      "no external MP3/WAV"
+    ]
+  },
+  "acceptance": {
+    "build": "npm run build passes",
+    "verify": "npm run verify passes and checks design/export/static markers",
+    "smoke": "npm run smoke passes where Playwright browsers are installed",
+    "dpr": "DPR 1 and DPR 2 debug state remains valid",
+    "mobile": "touch-sized viewport starts and exposes mobile controls",
+    "progression": "final gate cannot skip Rogue Architect",
+    "deployment": "vercel.json publishes frontend"
+  },
+  "evidence_policy": [
+    "Do not claim production-ready without current build, verify, smoke, and deployment evidence.",
+    "Do not invent Matrix commit IDs or public URL status.",
+    "Keep secrets out of the repo; build.sh may read .env but never prints API keys."
+  ],
+  "batch_roadmap": [
+    {
+      "id": "D-1-design",
+      "title": "Design Bundle",
+      "allowed_files": [
+        "design/contract-quest-design-bundle.json",
+        "design/contract-quest-mb-export.json",
+        "design/README.md"
+      ],
+      "acceptance": "mdesign validate passes"
+    },
+    {
+      "id": "00-contract-scaffold",
+      "title": "Contract reset and scaffold",
+      "allowed_files": [
+        "MATRIX_BLUEPRINT.yaml",
+        "MATRIX_TASKS.md",
+        "MATRIX_ACCEPTANCE_CRITERIA.md",
+        "MATRIX_VALIDATION.md",
+        "MATRIX_ALLOWED_CHANGES.md",
+        "package.json",
+        "vercel.json",
+        "frontend/index.html",
+        "scripts/verify-static.js",
+        "tests/**",
+        "README.md"
+      ],
+      "acceptance": "npm run build and npm run verify pass"
+    },
+    {
+      "id": "01-framework",
+      "title": "Framework foundation and viewport invariant",
+      "allowed_files": [
+        "frontend/index.html",
+        "scripts/verify-static.js",
+        "tests/**"
+      ],
+      "acceptance": "DPR 1 and DPR 2 debug state is sane"
+    },
+    {
+      "id": "02-art",
+      "title": "Art direction and deterministic asset pipeline",
+      "allowed_files": [
+        "frontend/index.html",
+        "scripts/verify-static.js",
+        "tests/**"
+      ],
+      "acceptance": "original deterministic art markers remain"
+    },
+    {
+      "id": "03-levels",
+      "title": "Level and story model",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**",
+        "README.md"
+      ],
+      "acceptance": "three-level campaign metadata exists"
+    },
+    {
+      "id": "04-hero",
+      "title": "Hero movement, physics, death, and respawn",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**"
+      ],
+      "acceptance": "jump edge and pit/respawn markers exist"
+    },
+    {
+      "id": "05-rewards-gates",
+      "title": "Rewards, panels, HUD, and Matrix Gates",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**"
+      ],
+      "acceptance": "collectibles and gates are explicit"
+    },
+    {
+      "id": "06-enemies-powerups",
+      "title": "Enemies and power-ups",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**"
+      ],
+      "acceptance": "central damage and power-up behavior remains testable"
+    },
+    {
+      "id": "07-boss",
+      "title": "Rogue Architect boss and final validation",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**"
+      ],
+      "acceptance": "final gate is locked while bossAlive is true"
+    },
+    {
+      "id": "08-audio-polish",
+      "title": "WebAudio music, SFX, and atmosphere",
+      "allowed_files": [
+        "frontend/index.html",
+        "scripts/verify-static.js",
+        "tests/**"
+      ],
+      "acceptance": "audio initializes only after user gesture"
+    },
+    {
+      "id": "09-mobile-a11y",
+      "title": "Mobile controls, accessibility, and UX polish",
+      "allowed_files": [
+        "frontend/index.html",
+        "tests/**"
+      ],
+      "acceptance": "touch start and jump work"
+    },
+    {
+      "id": "10-evidence-release",
+      "title": "QA, evidence, tutorial, and release package",
+      "allowed_files": [
+        "README.md",
+        "EVIDENCE.md",
+        "build.sh",
+        "scripts/**",
+        "tests/**"
+      ],
+      "acceptance": "claims match evidence"
+    }
+  ],
+  "repair_policy": {
+    "D": "Design repair when mdesign validation or export fails.",
+    "A": "Runtime repair for browser/page errors.",
+    "B": "Viewport/layout repair for DPR, clipping, or mobile issues.",
+    "C": "Gameplay/audio progression repair for softlocks, boss skips, respawn failures, or audio lifecycle bugs."
+  }
+}

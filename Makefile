@@ -5,7 +5,7 @@ PYTHON ?= python3
 NPM ?= npm
 PORT ?= 8000
 HOST ?= 127.0.0.1
-GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai
+GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai matrix-designer
 MATRIX_BUILDER_REPO ?= https://github.com/agent-matrix/matrix-builder.git
 MATRIX_BUILDER_DIR ?= .tools/matrix-builder
 

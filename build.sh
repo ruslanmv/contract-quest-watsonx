@@ -92,11 +92,11 @@ validate_design() {
     mdesign export "$DESIGN_BUNDLE" -o "$MATRIX_EXPORT"
   else
     if [ "$STRICT_GENERATION" = "1" ]; then
-      printf 'Matrix Designer CLI (mdesign) not found; using the checked-in Matrix export as the governed batch plan.\n'
-      printf 'Run make install to clone/install Matrix Designer for live validation and export.\n'
-    else
-      printf 'Matrix Designer CLI (mdesign) not found; validating checked-in design JSON and Matrix export JSON.\n'
+      printf 'Matrix Designer CLI (mdesign) is required for governed generation.\n' >&2
+      printf 'Install Matrix Designer or run ./build.sh verify for checked-in artifact validation only.\n' >&2
+      return 1
     fi
+    printf 'Matrix Designer CLI (mdesign) not found; validating checked-in design JSON and Matrix export JSON.\n'
     node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')); JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));" "$DESIGN_BUNDLE" "$MATRIX_EXPORT"
     printf 'Using checked-in Matrix Builder export: %s\n' "$MATRIX_EXPORT"
   fi
@@ -179,7 +179,7 @@ Usage: ./build.sh [verify|design|generate|all|help]
 Modes:
   verify    Run local npm/static checks against checked-in artifacts. Default.
   design    Validate design/contract-quest-design-bundle.json and export the Matrix plan.
-  generate  Matrix Designer -> Matrix Builder -> GitPilot/watsonx batch generation.
+  generate  Strict Matrix Designer -> Matrix Builder -> GitPilot/watsonx batch generation.
   all       Alias for the full governed generation workflow.
   help      Show this help message.
 
@@ -195,10 +195,10 @@ Environment:
 
 Secrets are never printed by this script.
 
-Governed generation:
-  generate/all use mdesign when installed; otherwise they use the checked-in
-  Matrix export as the governed batch plan. They require mb, gitpilot,
-  WATSONX_API_KEY, and WATSONX_PROJECT_ID to call watsonx.ai.
+Strict generation:
+  generate/all require mdesign, mb, gitpilot, WATSONX_API_KEY, and
+  WATSONX_PROJECT_ID. Use ./build.sh verify when you only want to validate the
+  existing static game artifacts without calling AI generation tools.
 HELP
 }
 
@@ -213,13 +213,13 @@ case "$MODE" in
     ;;
   generate)
     STRICT_GENERATION=1
-    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-0}"
+    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-1}"
     prepare_generate
     run_governed_generation
     ;;
   all)
     STRICT_GENERATION=1
-    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-0}"
+    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-1}"
     prepare_generate
     run_governed_generation
     ;;

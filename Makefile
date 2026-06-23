@@ -5,10 +5,8 @@ PYTHON ?= python3
 NPM ?= npm
 PORT ?= 8000
 HOST ?= 127.0.0.1
-GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai
+GOVERNED_PY_TOOLS ?= agent-generator gitcopilot crewai matrix-designer
 GOVERNED_REQUIRED_CMDS ?= mdesign mb gitpilot
-MATRIX_DESIGNER_REPO ?= https://github.com/ruslanmv/matrix-designer.git
-MATRIX_DESIGNER_DIR ?= .tools/matrix-designer
 MATRIX_BUILDER_REPO ?= https://github.com/agent-matrix/matrix-builder.git
 MATRIX_BUILDER_DIR ?= .tools/matrix-builder
 
@@ -18,7 +16,7 @@ help:
 	@echo "Contract Quest workflow targets"
 	@echo ""
 	@echo "  make install                Install local npm dependencies and attempt governed Python tool install"
-	@echo "  make build                  Run ./build.sh all (governed AI generation + verification)"
+	@echo "  make build                  Run ./build.sh all (strict governed AI generation + verification)"
 	@echo "  make verify                 Run ./build.sh verify (checked-in static artifacts only)"
 	@echo "  make smoke                  Run npm smoke script"
 	@echo "  make design                 Run ./build.sh design"

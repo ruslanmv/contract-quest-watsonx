@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 MODE="${1:-verify}"
+STRICT_GENERATION=0
 DESIGN_BUNDLE="design/contract-quest-design-bundle.json"
 MATRIX_EXPORT="design/contract-quest-mb-export.json"
 
@@ -90,7 +91,12 @@ validate_design() {
     mdesign validate "$DESIGN_BUNDLE"
     mdesign export "$DESIGN_BUNDLE" -o "$MATRIX_EXPORT"
   else
-    printf 'Matrix Designer CLI (mdesign) not found; validating checked-in design JSON and Matrix export JSON.\n'
+    if [ "$STRICT_GENERATION" = "1" ]; then
+      printf 'Matrix Designer CLI (mdesign) not found; using the checked-in Matrix export as the governed batch plan.\n'
+      printf 'Run make install to clone/install Matrix Designer for live validation and export.\n'
+    else
+      printf 'Matrix Designer CLI (mdesign) not found; validating checked-in design JSON and Matrix export JSON.\n'
+    fi
     node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')); JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));" "$DESIGN_BUNDLE" "$MATRIX_EXPORT"
     printf 'Using checked-in Matrix Builder export: %s\n' "$MATRIX_EXPORT"
   fi
@@ -142,7 +148,28 @@ prepare_generate() {
   printf 'Model: %s\n' "$GITPILOT_WATSONX_MODEL"
   printf 'API key: configured (value hidden)\n'
   printf 'Project ID: configured (value hidden)\n'
-  printf 'Next step: add or run the batch-specific mb/gitpilot loop after reviewing %s.\n' "$MATRIX_EXPORT"
+  printf 'Matrix export: %s\n' "$MATRIX_EXPORT"
+}
+
+run_governed_generation() {
+  section "Run Matrix Builder / GitPilot governed generation"
+
+  local batch_ids
+  batch_ids="$(node -e "const fs=require('fs'); const plan=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const batches=plan.matrix_builder?.batches; if(!Array.isArray(batches)||!batches.length){process.exit(1)} for (const batch of batches) console.log(batch.id);" "$MATRIX_EXPORT")"
+
+  local batch_id
+  while IFS= read -r batch_id; do
+    [ -n "$batch_id" ] || continue
+    section "Matrix Designer-designed batch: $batch_id"
+    node -e "const fs=require('fs'); const plan=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const b=plan.matrix_builder.batches.find(x=>x.id===process.argv[2]); console.log('Title: '+(b.title||b.id)); console.log('Allowed files: '+(b.allowed_files||[]).join(', ')); console.log('Acceptance: '+(b.acceptance||'not specified'));" "$MATRIX_EXPORT" "$batch_id"
+
+    mb next || true
+    mb prompt --coder gitpilot
+    gitpilot generate
+
+    verify_static
+    mb check
+  done <<< "$batch_ids"
 }
 
 print_help() {
@@ -150,10 +177,10 @@ print_help() {
 Usage: ./build.sh [verify|design|generate|all|help]
 
 Modes:
-  verify    Run local npm/static checks available in this repository. Default.
+  verify    Run local npm/static checks against checked-in artifacts. Default.
   design    Validate design/contract-quest-design-bundle.json and export the Matrix plan.
-  generate  Check design, Matrix Builder, GitPilot, and watsonx prerequisites, then verify locally.
-  all       Run design validation and local verification.
+  generate  Matrix Designer -> Matrix Builder -> GitPilot/watsonx batch generation.
+  all       Alias for the full governed generation workflow.
   help      Show this help message.
 
 Environment:
@@ -167,6 +194,11 @@ Environment:
   GITPILOT_WATSONX_MODEL defaults to openai/gpt-oss-120b
 
 Secrets are never printed by this script.
+
+Governed generation:
+  generate/all use mdesign when installed; otherwise they use the checked-in
+  Matrix export as the governed batch plan. They require mb, gitpilot,
+  WATSONX_API_KEY, and WATSONX_PROJECT_ID to call watsonx.ai.
 HELP
 }
 
@@ -180,12 +212,16 @@ case "$MODE" in
     validate_design
     ;;
   generate)
+    STRICT_GENERATION=1
+    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-0}"
     prepare_generate
-    verify_static
+    run_governed_generation
     ;;
   all)
-    validate_design
-    verify_static
+    STRICT_GENERATION=1
+    export REQUIRE_PLAYWRIGHT_SMOKE="${REQUIRE_PLAYWRIGHT_SMOKE:-0}"
+    prepare_generate
+    run_governed_generation
     ;;
   help|-h|--help)
     print_help

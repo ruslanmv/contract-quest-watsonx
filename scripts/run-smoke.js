@@ -11,9 +11,13 @@ function hasPlaywright() {
 }
 
 if (!hasPlaywright()) {
-  console.log('Playwright is not installed in this sandbox; skipping smoke tests.');
+  const strict = process.env.REQUIRE_PLAYWRIGHT_SMOKE === '1';
+  const message = strict
+    ? 'Playwright is required for this governed build but is not installed.'
+    : 'Playwright is not installed in this sandbox; skipping smoke tests.';
+  console.log(message);
   console.log('Install @playwright/test and browser binaries to run tests/playability.spec.js.');
-  process.exit(0);
+  process.exit(strict ? 1 : 0);
 }
 
 const result = spawnSync('npx', ['playwright', 'test'], { stdio: 'inherit', shell: process.platform === 'win32' });

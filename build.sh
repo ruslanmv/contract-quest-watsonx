@@ -69,9 +69,16 @@ load_env_file() {
   fi
 
   export GITPILOT_PROVIDER="${GITPILOT_PROVIDER:-watsonx}"
+  export MATRIX_DESIGNER_PROVIDER="${MATRIX_DESIGNER_PROVIDER:-watsonx}"
+  export MATRIX_DESIGNER_MODEL="${MATRIX_DESIGNER_MODEL:-openai/gpt-oss-120b}"
+  export MB_PROVIDER="${MB_PROVIDER:-watsonx}"
+  export MB_MODEL="${MB_MODEL:-openai/gpt-oss-120b}"
+  export GITPILOT_MODEL_PROVIDER="${GITPILOT_MODEL_PROVIDER:-watsonx}"
   export WATSONX_URL="${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}"
   export WATSONX_BASE_URL="${WATSONX_BASE_URL:-$WATSONX_URL}"
   export GITPILOT_WATSONX_MODEL="${GITPILOT_WATSONX_MODEL:-openai/gpt-oss-120b}"
+  export WATSONX_MODEL_ID="${WATSONX_MODEL_ID:-$GITPILOT_WATSONX_MODEL}"
+  export WATSONX_MODEL="${WATSONX_MODEL:-$GITPILOT_WATSONX_MODEL}"
   export GITPILOT_MAX_TOKENS="${GITPILOT_MAX_TOKENS:-24000}"
   export OTEL_SDK_DISABLED="${OTEL_SDK_DISABLED:-true}"
   export CREWAI_DISABLE_TELEMETRY="${CREWAI_DISABLE_TELEMETRY:-true}"
@@ -209,6 +216,84 @@ EOF_REPAIR
   gitpilot generate -m "$(cat "$prompt_file")" -o . || gitpilot generate --prompt-file "$prompt_file"
 }
 
+
+ensure_governed_design_export() {
+  section "Normalize Matrix Designer output for watsonx Matrix Builder batches"
+  node - "$DESIGN_BUNDLE" "$MATRIX_EXPORT" "$DESIGN_BLUEPRINT" "$PROJECT_TITLE" "$GITPILOT_WATSONX_MODEL" <<'NODE'
+const fs = require('fs');
+const [designPath, exportPath, blueprintPath, projectTitle, model] = process.argv.slice(2);
+const batches = [
+  ['D-1-design','Design Bundle',['design/contract-quest-design-bundle.json','design/contract-quest-mb-export.json','design/README.md'],'mdesign validate passes'],
+  ['00-contract-scaffold','Contract reset and scaffold',['MATRIX_BLUEPRINT.yaml','MATRIX_TASKS.md','MATRIX_ACCEPTANCE_CRITERIA.md','MATRIX_VALIDATION.md','MATRIX_ALLOWED_CHANGES.md','package.json','vercel.json','frontend/index.html','scripts/verify-static.js','tests/**','README.md'],'npm run build and npm run verify pass'],
+  ['01-framework','Framework foundation and viewport invariant',['frontend/index.html','scripts/verify-static.js','tests/**'],'DPR 1 and DPR 2 debug state is sane'],
+  ['02-art','Art direction and deterministic asset pipeline',['frontend/index.html','scripts/verify-static.js','tests/**'],'original deterministic art markers remain'],
+  ['03-levels','Level and story model',['frontend/index.html','tests/**','README.md'],'three-level campaign metadata exists'],
+  ['04-hero','Hero movement, physics, death, and respawn',['frontend/index.html','tests/**'],'jump edge and pit/respawn markers exist'],
+  ['05-rewards-gates','Rewards, panels, HUD, and Matrix Gates',['frontend/index.html','tests/**'],'collectibles and gates are explicit'],
+  ['06-enemies-powerups','Enemies and power-ups',['frontend/index.html','tests/**'],'central damage and power-up behavior remains testable'],
+  ['07-boss','Rogue Architect boss and final validation',['frontend/index.html','tests/**'],'final gate is locked while bossAlive is true'],
+  ['08-audio-polish','WebAudio music, SFX, and atmosphere',['frontend/index.html','scripts/verify-static.js','tests/**'],'audio initializes only after user gesture'],
+  ['09-mobile-a11y','Mobile controls, accessibility, and UX polish',['frontend/index.html','tests/**'],'touch start and jump work'],
+  ['10-evidence-release','QA, evidence, tutorial, and release package',['README.md','EVIDENCE.md','build.sh','scripts/**','tests/**'],'claims match evidence']
+];
+const roadmap = batches.map(([id, title, allowed_files, acceptance], index) => ({
+  id: `batch-${String(index + 1).padStart(2, '0')}`,
+  name: title,
+  purpose: `Implement and verify the ${title} scope for Contract Quest.`,
+  allowed_files,
+  acceptance: [acceptance]
+}));
+const requiredFunctional = [
+  'npm run build passes and validates the static game artifact.',
+  'npm run verify passes and checks design, Matrix export, Vercel configuration, and frontend markers.',
+  'npm run smoke passes where Playwright and browser binaries are installed, or reports the environment limitation without requiring runtime credentials.',
+  'The game exposes desktop and mobile controls and supports DPR 1 and DPR 2 viewport states.',
+  'The final Matrix Gate cannot be completed while bossAlive is true.',
+  'Audio initializes lazily only after a user gesture and uses generated WebAudio rather than external audio files.',
+  'No watsonx API key or project credential is committed or required by the deployed static game.'
+];
+let design = {};
+try { design = JSON.parse(fs.readFileSync(designPath, 'utf8')); } catch {}
+design = {
+  schema_version: design.schema_version || 'matrix.designer.bundle/v1',
+  design_id: design.design_id || 'contract-quest-watsonx',
+  project: projectTitle,
+  source: design.source || { type: 'repo', path: designPath },
+  provenance: { ...(design.provenance || {}), created_by: 'Matrix Designer governed workflow', provider: 'watsonx', model, ai_assisted: true },
+  goal_analysis: {
+    real_goal: 'Build Contract Quest as a premium static browser platformer that can be reproduced through a governed Matrix Designer -> Matrix Builder -> GitPilot -> IBM watsonx.ai workflow and deployed as static frontend assets.',
+    complexity: 'large',
+    ...(design.goal_analysis || {})
+  },
+  framework_decision: design.framework_decision || { stack: ['HTML5 Canvas','vanilla JavaScript','static Vercel hosting'], rationale: 'Keep the game static, reproducible, and free of runtime credentials while Matrix Builder and GitPilot use watsonx.ai only during generation.' },
+  visual_target: design.visual_target || { style: 'warm governed arcade pixel quest with deterministic original art, contract coins, validation gems, RMD panels, Matrix Gates, and a Rogue Architect boss.' },
+  architecture: design.architecture || { systems: ['Viewport','Input','Physics','LevelModel','HUD','AudioBus','Particles','Progression','DebugHooks'] },
+  contracts: design.contracts || {},
+  acceptance: { ...(design.acceptance || {}), functional: requiredFunctional },
+  batch_roadmap: roadmap
+};
+const exported = {
+  schema_version: '1.0',
+  source_design_bundle: designPath,
+  matrix_builder: {
+    project: projectTitle,
+    provider: 'watsonx',
+    model,
+    default_verification: ['npm run build','npm run verify','npm run smoke','mb check'],
+    batches: batches.map(([id, title, allowed_files, acceptance]) => ({ id, title, allowed_files, acceptance }))
+  },
+  shared_prompt_header: 'You are implementing a Matrix Designer-designed Contract Quest production batch with GitPilot on IBM watsonx.ai. Follow the design bundle and Matrix export, stay in the allowed files, preserve logical viewport coordinates, jumpPressed/jumpHeld separation, boss-gate lock, lazy generated WebAudio, and evidence-backed claims.'
+};
+fs.mkdirSync(require('path').dirname(designPath), { recursive: true });
+fs.writeFileSync(designPath, JSON.stringify(design, null, 2) + '\n');
+fs.writeFileSync(exportPath, JSON.stringify(exported, null, 2) + '\n');
+if (!fs.existsSync(blueprintPath)) {
+  fs.writeFileSync(blueprintPath, JSON.stringify({ project: 'contract-quest-watsonx', provider_rule: 'watsonx-only', generation: { provider: 'watsonx', model } }, null, 2) + '\n');
+}
+console.log(`normalized ${roadmap.length} governed batches for provider watsonx and model ${model}`);
+NODE
+}
+
 generate_design() {
   ensure_evidence_dir
   section "Matrix Designer: blueprint, design, validate, export"
@@ -225,6 +310,7 @@ generate_design() {
   done
 
   run_capture "mdesign export" mdesign export "$DESIGN_BUNDLE" -o "$MATRIX_EXPORT"
+  ensure_governed_design_export
 }
 
 reset_matrix_builder_state() {
@@ -318,7 +404,7 @@ start_matrix_batch() {
   export MB_ALLOWED_FILES="$allowed_csv"
   export MB_PROMPT_FILE="$prompt_file"
   run_shell_capture "mb next ${title}" \
-    "mb next --title \"\$MB_TITLE\" --allowed-files \"\$MB_ALLOWED_FILES\" --prompt-file \"\$MB_PROMPT_FILE\" || mb next --title \"\$MB_TITLE\" --prompt-file \"\$MB_PROMPT_FILE\" || mb next"
+    'help="$(mb next --help 2>&1 || true)"; case "$help" in *"--title"*"--allowed-files"*"--prompt-file"*) mb next --title "$MB_TITLE" --allowed-files "$MB_ALLOWED_FILES" --prompt-file "$MB_PROMPT_FILE" ;; *"--title"*"--prompt-file"*) mb next --title "$MB_TITLE" --prompt-file "$MB_PROMPT_FILE" ;; *"--prompt-file"*) mb next --prompt-file "$MB_PROMPT_FILE" "$MB_TITLE" ;; *) mb next "$MB_TITLE" ;; esac'
 }
 
 run_gitpilot_prompt() {

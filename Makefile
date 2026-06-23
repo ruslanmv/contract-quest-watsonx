@@ -40,12 +40,25 @@ install-node:
 install-governed-tools:
 	@echo "==> Attempting governed workflow Python tool install"
 	@echo "    PyPI tools: $(GOVERNED_PY_TOOLS)"
+	@echo "    Matrix Designer repo: $(MATRIX_DESIGNER_REPO)"
 	@echo "    Matrix Builder repo: $(MATRIX_BUILDER_REPO)"
 	@echo "    Required commands after install: $(GOVERNED_REQUIRED_CMDS)"
 	@status=0; \
 	for tool in $(GOVERNED_PY_TOOLS); do \
 		$(PYTHON) -m pip install "$$tool" || status=$$?; \
 	done; \
+	if [ -d "$(MATRIX_DESIGNER_DIR)/.git" ]; then \
+		echo "==> Updating Matrix Designer checkout"; \
+		git -C "$(MATRIX_DESIGNER_DIR)" pull --ff-only || status=$$?; \
+	else \
+		echo "==> Cloning Matrix Designer"; \
+		rm -rf "$(MATRIX_DESIGNER_DIR)"; \
+		mkdir -p "$$(dirname "$(MATRIX_DESIGNER_DIR)")"; \
+		git clone "$(MATRIX_DESIGNER_REPO)" "$(MATRIX_DESIGNER_DIR)" || status=$$?; \
+	fi; \
+	if [ -d "$(MATRIX_DESIGNER_DIR)" ]; then \
+		$(PYTHON) -m pip install "$(MATRIX_DESIGNER_DIR)" || status=$$?; \
+	fi; \
 	if [ -d "$(MATRIX_BUILDER_DIR)/.git" ]; then \
 		echo "==> Updating Matrix Builder checkout"; \
 		git -C "$(MATRIX_BUILDER_DIR)" pull --ff-only || status=$$?; \
@@ -64,7 +77,7 @@ install-governed-tools:
 	if [ "$$status" -ne 0 ]; then \
 		echo "WARNING: governed Python tools could not be installed in this environment."; \
 		echo "         Local build/run targets still work with the checked-in static game."; \
-		echo "         Re-run in a network-enabled environment for full mb/gitpilot generation."; \
+		echo "         Re-run make install after network/tool issues are resolved for full generation."; \
 	fi
 
 build:

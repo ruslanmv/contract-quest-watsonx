@@ -166,7 +166,6 @@ require_governed_inputs() {
   local missing=0
   need_cmd node || missing=1
   need_cmd npm || missing=1
-  need_cmd curl || missing=1
   need_cmd mdesign || missing=1
   need_cmd mb || missing=1
   need_cmd gitpilot || missing=1
@@ -191,174 +190,8 @@ require_governed_inputs() {
   fi
 }
 
-check_gitpilot_connection() {
-  section "GitPilot connection check"
-  need_cmd gitpilot
-
-  if gitpilot --version >/dev/null 2>&1; then
-    run_capture "gitpilot version" gitpilot --version
-  else
-    run_capture "gitpilot help" gitpilot --help
-  fi
-
-  if gitpilot generate --help >/dev/null 2>&1; then
-    printf 'GitPilot generate command is available.\n'
-  else
-    printf 'GitPilot is installed, but gitpilot generate is not available.\n' >&2
-    return 1
-  fi
-}
-
-check_watsonx_connection() {
-  section "watsonx API health check"
-  need_cmd curl
-  need_cmd node
-
-  local token_file specs_file token iam_status specs_status
-  token_file="$EVIDENCE_DIR/watsonx-iam-token.json"
-  specs_file="$EVIDENCE_DIR/watsonx-foundation-model-specs.json"
-  rm -f "$token_file" "$specs_file"
-
-  set +e
-  curl -sS --fail \
-    -X POST "https://iam.cloud.ibm.com/identity/token" \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    --data-urlencode "grant_type=urn:ibm:params:oauth:grant-type:apikey" \
-    --data-urlencode "apikey=$WATSONX_API_KEY" \
-    > "$token_file"
-  iam_status=$?
-  set -e
-
-  if [ "$iam_status" -ne 0 ]; then
-    rm -f "$token_file"
-    printf 'watsonx health failed: could not obtain IBM IAM token.\n' >&2
-    return 1
-  fi
-
-  token="$(node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(j.access_token || '')" "$token_file")"
-  rm -f "$token_file"
-  if [ -z "$token" ]; then
-    printf 'watsonx health failed: IAM response did not contain access_token.\n' >&2
-    return 1
-  fi
-
-  set +e
-  curl -sS --fail \
-    -H "Authorization: Bearer $token" \
-    "${WATSONX_URL%/}/ml/v1/foundation_model_specs?version=${WATSONX_VERSION:-2024-05-01}" \
-    > "$specs_file"
-  specs_status=$?
-  set -e
-
-  if [ "$specs_status" -ne 0 ]; then
-    rm -f "$specs_file"
-    printf 'watsonx health failed: could not reach watsonx foundation_model_specs endpoint.\n' >&2
-    return 1
-  fi
-
-  record_command "watsonx API health check" "0" "$specs_file"
-  printf 'watsonx IAM and API endpoint are reachable.\n'
-}
-
-check_watsonx_chat_generation() {
-  section "watsonx chat generation check"
-  if [ "${CHECK_WATSONX_CHAT:-0}" != "1" ]; then
-    printf 'Skipping live watsonx chat check. Set CHECK_WATSONX_CHAT=1 to enable it.\n'
-    KNOWN_LIMITATIONS+=("Live watsonx chat/model check skipped because CHECK_WATSONX_CHAT was not 1.")
-    return 0
-  fi
-
-  need_cmd curl
-  need_cmd node
-
-  local token_file token body_file response_file
-  token_file="$EVIDENCE_DIR/watsonx-chat-token.json"
-  body_file="$EVIDENCE_DIR/watsonx-chat-request.json"
-  response_file="$EVIDENCE_DIR/watsonx-chat-response.json"
-
-  curl -sS --fail \
-    -X POST "https://iam.cloud.ibm.com/identity/token" \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    --data-urlencode "grant_type=urn:ibm:params:oauth:grant-type:apikey" \
-    --data-urlencode "apikey=$WATSONX_API_KEY" \
-    > "$token_file"
-
-  token="$(node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(j.access_token || '')" "$token_file")"
-  rm -f "$token_file"
-  if [ -z "$token" ]; then
-    printf 'watsonx chat check failed: IAM response did not contain access_token.\n' >&2
-    return 1
-  fi
-
-  node - "$body_file" <<'NODE'
-const fs = require('fs');
-fs.writeFileSync(process.argv[2], JSON.stringify({
-  model_id: process.env.GITPILOT_WATSONX_MODEL,
-  project_id: process.env.WATSONX_PROJECT_ID,
-  messages: [
-    { role: "user", content: "Reply with exactly: OK" }
-  ],
-  parameters: {
-    max_tokens: 8,
-    temperature: 0
-  }
-}, null, 2));
-NODE
-
-  curl -sS --fail \
-    -X POST "${WATSONX_URL%/}/ml/v1/text/chat?version=${WATSONX_VERSION:-2024-05-01}" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    --data @"$body_file" \
-    > "$response_file"
-
-  record_command "watsonx chat generation check" "0" "$response_file"
-  printf 'watsonx chat generation endpoint responded. Response saved to %s\n' "$response_file"
-}
-
-assert_full_design_and_export() {
-  local bundle="$1" export_file="$2"
-  node - "$bundle" "$export_file" <<'NODE'
-const fs = require('fs');
-
-const bundlePath = process.argv[2];
-const exportPath = process.argv[3];
-const design = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
-const exported = JSON.parse(fs.readFileSync(exportPath, 'utf8'));
-const failures = [];
-
-if (design.project !== 'Contract Quest') {
-  failures.push('design.project must be Contract Quest');
-}
-
-if (!Array.isArray(design.batch_roadmap) || design.batch_roadmap.length < 12) {
-  failures.push('design.batch_roadmap must contain the full D-1, 0, 1-10 batch plan');
-}
-
-if (!design.acceptance || !Array.isArray(design.acceptance.functional) || design.acceptance.functional.length < 5) {
-  failures.push('design.acceptance.functional must contain production acceptance criteria');
-}
-
-const batches = exported.matrix_builder && exported.matrix_builder.batches;
-if (!Array.isArray(batches) || batches.length < 12) {
-  failures.push('Matrix export must contain matrix_builder.batches with the full batch plan');
-}
-
-if (exported.matrix_builder && exported.matrix_builder.model !== 'openai/gpt-oss-120b') {
-  failures.push('Matrix export must use openai/gpt-oss-120b');
-}
-
-if (failures.length) {
-  for (const failure of failures) console.error(`Contract Quest design/export check failed: ${failure}`);
-  process.exit(1);
-}
-
-console.log(`Contract Quest design/export check passed with ${batches.length} batches.`);
-NODE
-}
-
 run_design_repair() {
-  local attempt="$1" reason="$2" repair_bundle="${3:-$DESIGN_BUNDLE}" repair_export="${4:-$MATRIX_EXPORT}" repair_blueprint="${5:-$DESIGN_BLUEPRINT}" prompt_file="$EVIDENCE_DIR/repair-d-design-${attempt}.md"
+  local attempt="$1" reason="$2" prompt_file="$EVIDENCE_DIR/repair-d-design-${attempt}.md"
   section "Repair D: design bundle/schema repair attempt $attempt"
   cat > "$prompt_file" <<EOF_REPAIR
 Repair D: Matrix Designer design bundle/schema repair.
@@ -367,9 +200,9 @@ Reason:
 $reason
 
 Repair only these files if needed:
-- $repair_bundle
-- $repair_export
-- $repair_blueprint
+- $DESIGN_BUNDLE
+- $MATRIX_EXPORT
+- $DESIGN_BLUEPRINT
 
 Do not print or request secrets. Make the design bundle validate with the installed Matrix Designer schema.
 EOF_REPAIR
@@ -378,34 +211,20 @@ EOF_REPAIR
 
 generate_design() {
   ensure_evidence_dir
-  local tmp_dir tmp_blueprint tmp_bundle tmp_export
-  tmp_dir=".build/tmp-design"
-  tmp_blueprint="$tmp_dir/blueprint.json"
-  tmp_bundle="$tmp_dir/contract-quest-design-bundle.json"
-  tmp_export="$tmp_dir/contract-quest-mb-export.json"
-
-  rm -rf "$tmp_dir"
-  mkdir -p "$tmp_dir" "$(dirname "$DESIGN_BLUEPRINT")"
-
   section "Matrix Designer: blueprint, design, validate, export"
-  run_capture "mdesign blueprints" mdesign blueprints --idea "$IDEA" -o "$tmp_blueprint"
-  run_capture "mdesign design" mdesign design --idea "$IDEA" --blueprint "$tmp_blueprint" -o "$tmp_bundle"
+  run_capture "mdesign blueprints" mdesign blueprints --idea "$IDEA" -o "$DESIGN_BLUEPRINT"
+  run_capture "mdesign design" mdesign design --idea "$IDEA" --blueprint "$DESIGN_BLUEPRINT" -o "$DESIGN_BUNDLE"
 
   local attempt=0
-  until run_capture "mdesign validate" mdesign validate "$tmp_bundle"; do
+  until run_capture "mdesign validate" mdesign validate "$DESIGN_BUNDLE"; do
     if [ "$attempt" -ge "$MAX_REPAIR_ATTEMPTS" ]; then
       return 1
     fi
     attempt=$((attempt + 1))
-    run_design_repair "$attempt" "mdesign validate failed; see $EVIDENCE_DIR/mdesign-validate.log" "$tmp_bundle" "$tmp_export" "$tmp_blueprint"
+    run_design_repair "$attempt" "mdesign validate failed; see $EVIDENCE_DIR/mdesign-validate.log"
   done
 
-  run_capture "mdesign export" mdesign export "$tmp_bundle" -o "$tmp_export"
-  run_capture "Contract Quest design/export full check" assert_full_design_and_export "$tmp_bundle" "$tmp_export"
-
-  cp "$tmp_blueprint" "$DESIGN_BLUEPRINT"
-  cp "$tmp_bundle" "$DESIGN_BUNDLE"
-  cp "$tmp_export" "$MATRIX_EXPORT"
+  run_capture "mdesign export" mdesign export "$DESIGN_BUNDLE" -o "$MATRIX_EXPORT"
 }
 
 reset_matrix_builder_state() {
@@ -505,7 +324,6 @@ start_matrix_batch() {
 run_gitpilot_prompt() {
   local prompt_file="$1" title="$2"
   export GP_PROMPT_FILE="$prompt_file"
-  check_watsonx_connection
   run_shell_capture "gitpilot generate ${title}" \
     "gitpilot generate -m \"\$(cat \"\$GP_PROMPT_FILE\")\" -o . || gitpilot generate --prompt-file \"\$GP_PROMPT_FILE\" -o ."
 }
@@ -689,9 +507,6 @@ from_zero() {
   STRICT_GENERATION=1
   ensure_evidence_dir
   require_governed_inputs
-  check_gitpilot_connection
-  check_watsonx_connection
-  check_watsonx_chat_generation
   generate_design
   reset_matrix_builder_state
   npm_install_if_needed

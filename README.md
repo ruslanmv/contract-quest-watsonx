@@ -91,15 +91,13 @@ GITPILOT_MAX_TOKENS=24000
 
 Optional deployment variables are `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_ORG_ID`, and `PUBLIC_GAME_URL`. If `VERCEL_TOKEN` is absent, the from-zero script skips deployment and records that limitation in `EVIDENCE.md`.
 
-The strict build checks the GitPilot CLI, obtains an IBM IAM token, verifies the watsonx ML API endpoint, and can optionally test the configured model/project pair with `CHECK_WATSONX_CHAT=1 make build`.
-
 To run strict governed generation, run:
 
 ```bash
 make build
 ```
 
-The from-zero build first generates Matrix Designer output into `.build/tmp-design`, validates that the temporary design/export contains the full Contract Quest batch plan, and only then copies it over `design/blueprint.json`, `design/contract-quest-design-bundle.json`, and `design/contract-quest-mb-export.json`. This prevents a weak deterministic Matrix Designer fallback from overwriting the curated design files or deleting generated game output. After the full export check passes, the script resets `.mb`, generated frontend output, `dist`, and test reports; runs each Matrix Designer-exported batch through Matrix Builder and GitPilot/watsonx.ai with a full batch prompt; verifies each batch with `npm install`, `npm run build`, `npm run verify`, `npm run smoke`, and `mb check`; and writes `EVIDENCE.md` at the end.
+The from-zero build regenerates `design/blueprint.json`, `design/contract-quest-design-bundle.json`, and `design/contract-quest-mb-export.json`; resets `.mb`, generated frontend output, `dist`, and test reports; runs each Matrix Designer-exported batch through Matrix Builder and GitPilot/watsonx.ai with a full batch prompt; verifies each batch with `npm install`, `npm run build`, `npm run verify`, `npm run smoke`, and `mb check`; and writes `EVIDENCE.md` at the end.
 
 ## Deployment
 

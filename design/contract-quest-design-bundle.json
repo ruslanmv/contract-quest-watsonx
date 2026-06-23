@@ -2,19 +2,25 @@
   "schema_version": "matrix.designer.bundle/v1",
   "design_id": "contract-quest-watsonx",
   "project": "Contract Quest",
-  "source": "repo://contract-quest-watsonx/design/contract-quest-design-bundle.json",
+  "source": {
+    "type": "repo",
+    "path": "design/contract-quest-design-bundle.json"
+  },
   "provenance": {
     "created_by": "Matrix Designer governed workflow",
-    "provider": "IBM watsonx.ai",
     "model": "openai/gpt-oss-120b",
-    "repository": "contract-quest-watsonx"
+    "ai_assisted": true
   },
   "goal_analysis": {
     "real_goal": "Build Contract Quest as a premium static browser platformer that can be reproduced through a governed Matrix Designer -> Matrix Builder -> GitPilot -> IBM watsonx.ai workflow and deployed as static frontend assets.",
-    "complexity": "medium-high"
+    "complexity": "large"
   },
   "framework_decision": {
-    "stack": "single-file HTML5 Canvas, vanilla JavaScript, static Vercel hosting",
+    "stack": [
+      "HTML5 Canvas",
+      "vanilla JavaScript",
+      "static Vercel hosting"
+    ],
     "rationale": "The repository already ships a static single-file canvas game at frontend/index.html; this keeps the build reproducible without backend runtime credentials while preserving a future path to Phaser/Vite if the game is modularized."
   },
   "visual_target": {

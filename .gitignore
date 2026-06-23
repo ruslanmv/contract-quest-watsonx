@@ -39,6 +39,7 @@ logs/
 # Build/test outputs
 dist/
 build/
+.build/
 coverage/
 playwright-report/
 test-results/

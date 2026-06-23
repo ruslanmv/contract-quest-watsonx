@@ -48,9 +48,10 @@ export WATSONX_API_KEY=<your IBM Cloud key>
 export WATSONX_PROJECT_ID=<your watsonx project>
 export WATSONX_URL=https://us-south.ml.cloud.ibm.com
 export GITPILOT_WATSONX_MODEL=openai/gpt-oss-120b
+export GITPILOT_MAX_TOKENS=24000
 ```
 
-Do not commit API keys. The deployed game is static and does not need watsonx credentials at runtime.
+Do not commit API keys. The deployed game is static and does not need watsonx credentials at runtime. Rotate any watsonx key that was pasted into chat or logs before running the final governed build.
 
 ## Local commands
 
@@ -74,22 +75,29 @@ Run the repository workflow script from the repo root:
 ./build.sh verify
 ```
 
-`build.sh` supports four modes: `verify` for local npm/static checks, `design` for Matrix Designer validation and export, `generate` for design plus Matrix Builder/GitPilot/watsonx prerequisite checks, and `all` for design plus local verification.
+`build.sh` supports `verify` for local npm/static checks, `design` for strict Matrix Designer blueprint/design/validate/export, and `from-zero` for the full strict blog pipeline: design → govern → generate → verify → optional publish with evidence. `generate` and `all` are aliases for `from-zero`. Use `make verify` when you only want to validate checked-in artifacts.
 
 The script reads environment variables from the shell or from `.env`. It accepts canonical watsonx names and local aliases without printing secret values:
 
 ```bash
-PROJECT_ID=<your watsonx project id>
+GITPILOT_PROVIDER=watsonx
+WATSONX_PROJECT_ID=<your watsonx project id>
 WATSONX_URL=https://us-south.ml.cloud.ibm.com
 WATSONX_API_KEY=<your IBM Cloud key>
+GITPILOT_WATSONX_MODEL=openai/gpt-oss-120b
+GITPILOT_MAX_TOKENS=24000
 # Legacy typo also accepted: WATSXON_API_KEY=<your IBM Cloud key>
 ```
 
-To check governed generation prerequisites, run:
+Optional deployment variables are `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_ORG_ID`, and `PUBLIC_GAME_URL`. If `VERCEL_TOKEN` is absent, the from-zero script skips deployment and records that limitation in `EVIDENCE.md`.
+
+To run strict governed generation, run:
 
 ```bash
-./build.sh generate
+make build
 ```
+
+The from-zero build regenerates `design/blueprint.json`, `design/contract-quest-design-bundle.json`, and `design/contract-quest-mb-export.json`; resets `.mb`, generated frontend output, `dist`, and test reports; runs each Matrix Designer-exported batch through Matrix Builder and GitPilot/watsonx.ai with a full batch prompt; verifies each batch with `npm install`, `npm run build`, `npm run verify`, `npm run smoke`, and `mb check`; and writes `EVIDENCE.md` at the end.
 
 ## Deployment
 

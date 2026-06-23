@@ -1,38 +1,26 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "matrix.designer.bundle/v1",
+  "design_id": "contract-quest-watsonx",
   "project": "Contract Quest",
+  "source": "repo://contract-quest-watsonx/design/contract-quest-design-bundle.json",
+  "provenance": {
+    "created_by": "Matrix Designer governed workflow",
+    "provider": "IBM watsonx.ai",
+    "model": "openai/gpt-oss-120b",
+    "repository": "contract-quest-watsonx"
+  },
   "goal_analysis": {
-    "game": "Contract Quest",
-    "target": "premium static browser platformer",
-    "deployment": "Vercel static hosting",
-    "constraints": [
-      "Matrix Designer-first workflow",
-      "Matrix Builder-governed batches",
-      "GitPilot code generation",
-      "IBM watsonx.ai provider with openai/gpt-oss-120b",
-      "original deterministic art",
-      "generated lazy WebAudio music and SFX",
-      "desktop and mobile controls",
-      "Playwright smoke evidence"
-    ]
+    "real_goal": "Build Contract Quest as a premium static browser platformer that can be reproduced through a governed Matrix Designer -> Matrix Builder -> GitPilot -> IBM watsonx.ai workflow and deployed as static frontend assets.",
+    "complexity": "medium-high"
   },
   "framework_decision": {
-    "selected": "single-file canvas fallback",
-    "recommended_future": "Phaser 3 + Vite + TypeScript",
-    "reason": "The current repository already ships a static single-file canvas game through frontend/index.html; the design keeps the static Vercel target reproducible while documenting the Phaser production path for future modular rebuilds."
+    "stack": "single-file HTML5 Canvas, vanilla JavaScript, static Vercel hosting",
+    "rationale": "The repository already ships a static single-file canvas game at frontend/index.html; this keeps the build reproducible without backend runtime credentials while preserving a future path to Phaser/Vite if the game is modularized."
   },
   "visual_target": {
-    "style": "warm governed arcade pixel quest",
-    "quality_bar": "layered parallax, readable HUD, deterministic decoration, no protected assets, no per-frame shimmer for stable world art",
-    "forbidden": [
-      "protected assets",
-      "famous platformer imitation",
-      "external audio dependencies",
-      "runtime watsonx credentials in the deployed game"
-    ]
+    "style": "warm governed arcade pixel quest with layered parallax, readable HUD, deterministic original art, contract coins, validation gems, RMD panels, Matrix Gates, and a Rogue Architect boss."
   },
   "architecture": {
-    "runtime": "frontend/index.html",
     "systems": [
       "Viewport",
       "Input",
@@ -43,75 +31,38 @@
       "Particles",
       "Progression",
       "DebugHooks"
-    ],
-    "debug_hooks": [
-      "window.__cqDebug",
-      "window.__cqDebugWarpToGate"
     ]
   },
-  "contracts": {
-    "hero": [
-      "run",
-      "jumpPressed edge",
-      "jumpHeld variable height",
-      "checkpoint respawn",
-      "pit death"
-    ],
-    "levels": [
-      "Tutorial Field",
-      "Traversal Cavern",
-      "Boss Arena"
-    ],
-    "collectibles": [
-      "Contract Coins",
-      "Validation Gems",
-      "RMD Star"
-    ],
-    "enemies": [
-      "Bug Bots",
-      "Prompt Slimes"
-    ],
-    "boss": [
-      "Rogue Architect",
-      "shield phases",
-      "three stomp defeat",
-      "gate lock while bossAlive"
-    ],
-    "audio": [
-      "lazy WebAudio after gesture",
-      "generated music",
-      "mute persistence",
-      "no external MP3/WAV"
-    ]
-  },
+  "contracts": {},
   "acceptance": {
-    "build": "npm run build passes",
-    "verify": "npm run verify passes and checks design/export/static markers",
-    "smoke": "npm run smoke passes where Playwright browsers are installed",
-    "dpr": "DPR 1 and DPR 2 debug state remains valid",
-    "mobile": "touch-sized viewport starts and exposes mobile controls",
-    "progression": "final gate cannot skip Rogue Architect",
-    "deployment": "vercel.json publishes frontend"
+    "functional": [
+      "npm run build passes and validates the static game artifact.",
+      "npm run verify passes and checks design, Matrix export, Vercel configuration, and frontend markers.",
+      "npm run smoke passes where Playwright and browser binaries are installed, or skips non-strictly when the local fallback path lacks Playwright.",
+      "The game exposes desktop and mobile controls and supports DPR 1 and DPR 2 viewport states.",
+      "The final Matrix Gate cannot be completed while bossAlive is true.",
+      "Audio initializes lazily only after a user gesture and uses generated WebAudio rather than external audio files.",
+      "No watsonx API key or project credential is committed or required by the deployed static game."
+    ]
   },
-  "evidence_policy": [
-    "Do not claim production-ready without current build, verify, smoke, and deployment evidence.",
-    "Do not invent Matrix commit IDs or public URL status.",
-    "Keep secrets out of the repo; build.sh may read .env but never prints API keys."
-  ],
   "batch_roadmap": [
     {
-      "id": "D-1-design",
-      "title": "Design Bundle",
+      "id": "batch-01",
+      "name": "Design Bundle",
+      "purpose": "Implement and verify the Design Bundle scope for Contract Quest.",
       "allowed_files": [
         "design/contract-quest-design-bundle.json",
         "design/contract-quest-mb-export.json",
         "design/README.md"
       ],
-      "acceptance": "mdesign validate passes"
+      "acceptance": [
+        "mdesign validate passes"
+      ]
     },
     {
-      "id": "00-contract-scaffold",
-      "title": "Contract reset and scaffold",
+      "id": "batch-02",
+      "name": "Contract reset and scaffold",
+      "purpose": "Implement and verify the Contract reset and scaffold scope for Contract Quest.",
       "allowed_files": [
         "MATRIX_BLUEPRINT.yaml",
         "MATRIX_TASKS.md",
@@ -125,96 +76,126 @@
         "tests/**",
         "README.md"
       ],
-      "acceptance": "npm run build and npm run verify pass"
+      "acceptance": [
+        "npm run build and npm run verify pass"
+      ]
     },
     {
-      "id": "01-framework",
-      "title": "Framework foundation and viewport invariant",
+      "id": "batch-03",
+      "name": "Framework foundation and viewport invariant",
+      "purpose": "Implement and verify the Framework foundation and viewport invariant scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "scripts/verify-static.js",
         "tests/**"
       ],
-      "acceptance": "DPR 1 and DPR 2 debug state is sane"
+      "acceptance": [
+        "DPR 1 and DPR 2 debug state is sane"
+      ]
     },
     {
-      "id": "02-art",
-      "title": "Art direction and deterministic asset pipeline",
+      "id": "batch-04",
+      "name": "Art direction and deterministic asset pipeline",
+      "purpose": "Implement and verify the Art direction and deterministic asset pipeline scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "scripts/verify-static.js",
         "tests/**"
       ],
-      "acceptance": "original deterministic art markers remain"
+      "acceptance": [
+        "original deterministic art markers remain"
+      ]
     },
     {
-      "id": "03-levels",
-      "title": "Level and story model",
+      "id": "batch-05",
+      "name": "Level and story model",
+      "purpose": "Implement and verify the Level and story model scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**",
         "README.md"
       ],
-      "acceptance": "three-level campaign metadata exists"
+      "acceptance": [
+        "three-level campaign metadata exists"
+      ]
     },
     {
-      "id": "04-hero",
-      "title": "Hero movement, physics, death, and respawn",
+      "id": "batch-06",
+      "name": "Hero movement, physics, death, and respawn",
+      "purpose": "Implement and verify the Hero movement, physics, death, and respawn scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**"
       ],
-      "acceptance": "jump edge and pit/respawn markers exist"
+      "acceptance": [
+        "jump edge and pit/respawn markers exist"
+      ]
     },
     {
-      "id": "05-rewards-gates",
-      "title": "Rewards, panels, HUD, and Matrix Gates",
+      "id": "batch-07",
+      "name": "Rewards, panels, HUD, and Matrix Gates",
+      "purpose": "Implement and verify the Rewards, panels, HUD, and Matrix Gates scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**"
       ],
-      "acceptance": "collectibles and gates are explicit"
+      "acceptance": [
+        "collectibles and gates are explicit"
+      ]
     },
     {
-      "id": "06-enemies-powerups",
-      "title": "Enemies and power-ups",
+      "id": "batch-08",
+      "name": "Enemies and power-ups",
+      "purpose": "Implement and verify the Enemies and power-ups scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**"
       ],
-      "acceptance": "central damage and power-up behavior remains testable"
+      "acceptance": [
+        "central damage and power-up behavior remains testable"
+      ]
     },
     {
-      "id": "07-boss",
-      "title": "Rogue Architect boss and final validation",
+      "id": "batch-09",
+      "name": "Rogue Architect boss and final validation",
+      "purpose": "Implement and verify the Rogue Architect boss and final validation scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**"
       ],
-      "acceptance": "final gate is locked while bossAlive is true"
+      "acceptance": [
+        "final gate is locked while bossAlive is true"
+      ]
     },
     {
-      "id": "08-audio-polish",
-      "title": "WebAudio music, SFX, and atmosphere",
+      "id": "batch-10",
+      "name": "WebAudio music, SFX, and atmosphere",
+      "purpose": "Implement and verify the WebAudio music, SFX, and atmosphere scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "scripts/verify-static.js",
         "tests/**"
       ],
-      "acceptance": "audio initializes only after user gesture"
+      "acceptance": [
+        "audio initializes only after user gesture"
+      ]
     },
     {
-      "id": "09-mobile-a11y",
-      "title": "Mobile controls, accessibility, and UX polish",
+      "id": "batch-11",
+      "name": "Mobile controls, accessibility, and UX polish",
+      "purpose": "Implement and verify the Mobile controls, accessibility, and UX polish scope for Contract Quest.",
       "allowed_files": [
         "frontend/index.html",
         "tests/**"
       ],
-      "acceptance": "touch start and jump work"
+      "acceptance": [
+        "touch start and jump work"
+      ]
     },
     {
-      "id": "10-evidence-release",
-      "title": "QA, evidence, tutorial, and release package",
+      "id": "batch-12",
+      "name": "QA, evidence, tutorial, and release package",
+      "purpose": "Implement and verify the QA, evidence, tutorial, and release package scope for Contract Quest.",
       "allowed_files": [
         "README.md",
         "EVIDENCE.md",
@@ -222,13 +203,9 @@
         "scripts/**",
         "tests/**"
       ],
-      "acceptance": "claims match evidence"
+      "acceptance": [
+        "claims match evidence"
+      ]
     }
-  ],
-  "repair_policy": {
-    "D": "Design repair when mdesign validation or export fails.",
-    "A": "Runtime repair for browser/page errors.",
-    "B": "Viewport/layout repair for DPR, clipping, or mobile issues.",
-    "C": "Gameplay/audio progression repair for softlocks, boss skips, respawn failures, or audio lifecycle bugs."
-  }
+  ]
 }

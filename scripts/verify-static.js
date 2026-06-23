@@ -61,7 +61,7 @@ if (fs.existsSync(designPath)) {
   if (design) {
     required('design bundle names Contract Quest', design.project === 'Contract Quest');
     required('design bundle has full batch roadmap', Array.isArray(design.batch_roadmap) && design.batch_roadmap.length >= 12);
-    required('design bundle has acceptance criteria', !!design.acceptance && !!design.acceptance.progression && !!design.acceptance.smoke);
+    required('design bundle has functional acceptance criteria', !!design.acceptance && Array.isArray(design.acceptance.functional) && design.acceptance.functional.length >= 5);
   }
 }
 

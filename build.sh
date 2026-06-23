@@ -404,7 +404,7 @@ start_matrix_batch() {
   export MB_ALLOWED_FILES="$allowed_csv"
   export MB_PROMPT_FILE="$prompt_file"
   run_shell_capture "mb next ${title}" \
-    "mb next --title \"\$MB_TITLE\" --allowed-files \"\$MB_ALLOWED_FILES\" --prompt-file \"\$MB_PROMPT_FILE\" || mb next --title \"\$MB_TITLE\" --prompt-file \"\$MB_PROMPT_FILE\" || mb next"
+    'help="$(mb next --help 2>&1 || true)"; case "$help" in *"--title"*"--allowed-files"*"--prompt-file"*) mb next --title "$MB_TITLE" --allowed-files "$MB_ALLOWED_FILES" --prompt-file "$MB_PROMPT_FILE" ;; *"--title"*"--prompt-file"*) mb next --title "$MB_TITLE" --prompt-file "$MB_PROMPT_FILE" ;; *"--prompt-file"*) mb next --prompt-file "$MB_PROMPT_FILE" "$MB_TITLE" ;; *) mb next "$MB_TITLE" ;; esac'
 }
 
 run_gitpilot_prompt() {

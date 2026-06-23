@@ -222,11 +222,13 @@ check_gitpilot_connection() {
   gitpilot --help >/dev/null
 
   if ! gitpilot generate --help >/dev/null 2>&1; then
-    printf 'GitPilot is installed, but this build requires the local "gitpilot generate" command.\n' >&2
-    printf 'Your installed GitPilot does not expose it (its commands are serve/run/init/...).\n' >&2
-    printf 'Fix: upgrade GitPilot to a version with local generate support, then re-run:\n' >&2
-    printf '       pip install --upgrade gitpilot\n' >&2
-    printf '     (gitpilot generate writes files locally from a prompt via the configured provider.)\n' >&2
+    printf 'GitPilot is installed, but this build needs the local "gitpilot generate" command,\n' >&2
+    printf 'which ships in the "gitcopilot" package (the gitpilot command is provided by gitcopilot).\n' >&2
+    printf 'Your gitpilot exposes only serve/run/init/... — that is the wrong/older package.\n' >&2
+    printf 'Fix:\n' >&2
+    printf '       pip uninstall -y gitpilot         # remove the wrong package if it is installed\n' >&2
+    printf '       pip install --upgrade gitcopilot  # provides the gitpilot command + local generate\n' >&2
+    printf '     then re-run. (gitpilot generate writes files locally from a prompt.)\n' >&2
     gitpilot --help >&2
     return 1
   fi

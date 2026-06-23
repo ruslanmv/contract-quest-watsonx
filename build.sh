@@ -196,6 +196,24 @@ require_governed_inputs() {
   fi
 }
 
+# Which flag does this GitPilot's `generate` accept for the prompt? Newer builds may add
+# --prompt-file; the current local-generate command takes the prompt as --message/-m. Detected
+# once from `gitpilot generate --help` and cached in GP_GENERATE_MODE ("prompt-file" | "message").
+GP_GENERATE_MODE="${GP_GENERATE_MODE:-}"
+detect_gitpilot_generate_mode() {
+  if [ -n "$GP_GENERATE_MODE" ]; then
+    return 0
+  fi
+  local help
+  help="$(gitpilot generate --help 2>/dev/null || true)"
+  if printf '%s' "$help" | grep -q -- '--prompt-file'; then
+    GP_GENERATE_MODE="prompt-file"
+  else
+    # Default to the documented local-generate interface (gitpilot generate -m "...").
+    GP_GENERATE_MODE="message"
+  fi
+}
+
 check_gitpilot_connection() {
   section "GitPilot CLI health check"
 
@@ -204,13 +222,19 @@ check_gitpilot_connection() {
   gitpilot --help >/dev/null
 
   if ! gitpilot generate --help >/dev/null 2>&1; then
-    printf 'GitPilot is installed, but this build requires: gitpilot generate\n' >&2
-    printf 'Fix: install the GitPilot version with local generate support, or add the generate command.\n' >&2
+    printf 'GitPilot is installed, but this build needs the local "gitpilot generate" command,\n' >&2
+    printf 'which ships in the "gitcopilot" package (the gitpilot command is provided by gitcopilot).\n' >&2
+    printf 'Your gitpilot exposes only serve/run/init/... — that is the wrong/older package.\n' >&2
+    printf 'Fix:\n' >&2
+    printf '       pip uninstall -y gitpilot         # remove the wrong package if it is installed\n' >&2
+    printf '       pip install --upgrade gitcopilot  # provides the gitpilot command + local generate\n' >&2
+    printf '     then re-run. (gitpilot generate writes files locally from a prompt.)\n' >&2
     gitpilot --help >&2
     return 1
   fi
 
-  printf 'GitPilot local generate command is available.\n'
+  detect_gitpilot_generate_mode
+  printf 'GitPilot local generate command is available (prompt mode: %s).\n' "$GP_GENERATE_MODE"
 }
 
 check_watsonx_connection() {
@@ -471,8 +495,17 @@ start_matrix_batch() {
 run_gitpilot_prompt() {
   local prompt_file="$1" title="$2"
   export GP_PROMPT_FILE="$prompt_file"
-  run_shell_capture "gitpilot generate ${title}" \
-    'gitpilot generate --prompt-file "$GP_PROMPT_FILE" -o .'
+  detect_gitpilot_generate_mode
+  if [ "$GP_GENERATE_MODE" = "prompt-file" ]; then
+    # Newer GitPilot can read the prompt straight from a file (no arg-length limit).
+    run_shell_capture "gitpilot generate ${title}" \
+      'gitpilot generate --prompt-file "$GP_PROMPT_FILE" -o .'
+  else
+    # Current GitPilot `generate` takes the prompt as --message; pass the file's contents verbatim.
+    # Command substitution is not re-parsed, so backticks/$ inside the prompt stay literal.
+    run_shell_capture "gitpilot generate ${title}" \
+      'gitpilot generate -m "$(cat "$GP_PROMPT_FILE")" -o .'
+  fi
 }
 
 run_batch_verification() {

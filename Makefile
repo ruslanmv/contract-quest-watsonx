@@ -47,8 +47,10 @@ install-governed-tools:
 	@echo "    Matrix Builder repo: $(MATRIX_BUILDER_REPO)"
 	@echo "    Required commands after install: $(GOVERNED_REQUIRED_CMDS)"
 	@status=0; \
+	echo "==> Removing any conflicting standalone 'gitpilot' package (the gitpilot command ships in 'gitcopilot')"; \
+	$(PYTHON) -m pip uninstall -y gitpilot >/dev/null 2>&1 || true; \
 	for tool in $(GOVERNED_PY_TOOLS); do \
-		$(PYTHON) -m pip install "$$tool" || status=$$?; \
+		$(PYTHON) -m pip install --upgrade "$$tool" || status=$$?; \
 	done; \
 	if [ -d "$(MATRIX_DESIGNER_DIR)/.git" ]; then \
 		echo "==> Updating Matrix Designer checkout"; \

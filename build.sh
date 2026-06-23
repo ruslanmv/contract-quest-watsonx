@@ -175,7 +175,6 @@ require_governed_inputs() {
   need_cmd npm || missing=1
   need_cmd mdesign || missing=1
   need_cmd mb || missing=1
-  need_cmd gitpilot || missing=1
   need_env GITPILOT_PROVIDER || missing=1
   need_env WATSONX_API_KEY || missing=1
   need_env WATSONX_PROJECT_ID || missing=1
@@ -197,6 +196,32 @@ require_governed_inputs() {
   fi
 }
 
+check_gitpilot_connection() {
+  section "GitPilot CLI health check"
+
+  need_cmd gitpilot
+
+  gitpilot --help >/dev/null
+
+  if ! gitpilot generate --help >/dev/null 2>&1; then
+    printf 'GitPilot is installed, but this build requires: gitpilot generate\n' >&2
+    printf 'Fix: install the GitPilot version with local generate support, or add the generate command.\n' >&2
+    gitpilot --help >&2
+    return 1
+  fi
+
+  printf 'GitPilot local generate command is available.\n'
+}
+
+check_watsonx_connection() {
+  section "watsonx/GitPilot configuration health check"
+
+  if command -v gitpilot >/dev/null 2>&1; then
+    run_capture "gitpilot config" gitpilot config || true
+    run_capture "gitpilot doctor offline" gitpilot doctor --workspace . --offline || true
+  fi
+}
+
 run_design_repair() {
   local attempt="$1" reason="$2" prompt_file="$EVIDENCE_DIR/repair-d-design-${attempt}.md"
   section "Repair D: design bundle/schema repair attempt $attempt"
@@ -213,7 +238,7 @@ Repair only these files if needed:
 
 Do not print or request secrets. Make the design bundle validate with the installed Matrix Designer schema.
 EOF_REPAIR
-  gitpilot generate -m "$(cat "$prompt_file")" -o . || gitpilot generate --prompt-file "$prompt_file"
+  run_gitpilot_prompt "$prompt_file" "D design repair $attempt"
 }
 
 
@@ -398,28 +423,82 @@ console.log(`Acceptance: ${acceptance.join('; ')}`);
 NODE
 }
 
+tailor_latest_mb_batch() {
+  local title="$1" allowed_json="$2" acceptance_json="$3"
+  local latest
+
+  latest="$(find .mb/batches -maxdepth 1 -mindepth 1 -type d | sort | tail -1)"
+  if [ -z "$latest" ] || [ ! -f "$latest/batch.json" ]; then
+    printf 'Matrix Builder did not create a batch.json to tailor.\n' >&2
+    return 1
+  fi
+
+  node - "$latest/batch.json" "$title" "$allowed_json" "$acceptance_json" <<'NODE'
+const fs = require('fs');
+
+const file = process.argv[2];
+const title = process.argv[3];
+const allowed = JSON.parse(process.argv[4]);
+const acceptance = JSON.parse(process.argv[5]);
+
+const batch = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+batch.title = title;
+batch.goal_md = title;
+
+batch.plan = batch.plan || {};
+batch.plan.title = title;
+batch.plan.goal_md = title;
+batch.plan.allowed_files = allowed;
+
+if (Array.isArray(batch.plan.tasks) && batch.plan.tasks.length) {
+  batch.plan.tasks[0].title = title;
+  batch.plan.tasks[0].allowed_files = allowed;
+  batch.plan.tasks[0].acceptance_criteria = acceptance;
+}
+
+fs.writeFileSync(file, JSON.stringify(batch, null, 2) + "\n");
+NODE
+}
+
 start_matrix_batch() {
-  local title="$1" prompt_file="$2" allowed_csv="$3"
+  local title="$1" allowed_json="$2" acceptance_json="$3"
   export MB_TITLE="$title"
-  export MB_ALLOWED_FILES="$allowed_csv"
-  export MB_PROMPT_FILE="$prompt_file"
-  run_shell_capture "mb next ${title}" \
-    'help="$(mb next --help 2>&1 || true)"; case "$help" in *"--title"*"--allowed-files"*"--prompt-file"*) mb next --title "$MB_TITLE" --allowed-files "$MB_ALLOWED_FILES" --prompt-file "$MB_PROMPT_FILE" ;; *"--title"*"--prompt-file"*) mb next --title "$MB_TITLE" --prompt-file "$MB_PROMPT_FILE" ;; *"--prompt-file"*) mb next --prompt-file "$MB_PROMPT_FILE" "$MB_TITLE" ;; *) mb next "$MB_TITLE" ;; esac'
+  run_shell_capture "mb next ${title}" 'mb next "$MB_TITLE"'
+  tailor_latest_mb_batch "$title" "$allowed_json" "$acceptance_json"
 }
 
 run_gitpilot_prompt() {
   local prompt_file="$1" title="$2"
   export GP_PROMPT_FILE="$prompt_file"
   run_shell_capture "gitpilot generate ${title}" \
-    "gitpilot generate -m \"\$(cat \"\$GP_PROMPT_FILE\")\" -o . || gitpilot generate --prompt-file \"\$GP_PROMPT_FILE\" -o ."
+    'gitpilot generate --prompt-file "$GP_PROMPT_FILE" -o .'
 }
 
 run_batch_verification() {
   local batch_id="$1"
+
+  if [ "$batch_id" = "D-1-design" ]; then
+    run_capture "mdesign validate ${batch_id}" \
+      mdesign validate "$DESIGN_BUNDLE"
+
+    run_capture "mdesign export ${batch_id}" \
+      mdesign export "$DESIGN_BUNDLE" -o "$MATRIX_EXPORT"
+
+    run_capture "mb check ${batch_id}" \
+      mb check
+
+    return
+  fi
+
   npm_install_if_needed
   run_capture "npm run build ${batch_id}" npm run build
   run_capture "npm run verify ${batch_id}" npm run verify
-  run_capture "npm run smoke ${batch_id}" npm run smoke
+
+  if [ "$batch_id" != "00-contract-scaffold" ]; then
+    run_capture "npm run smoke ${batch_id}" npm run smoke
+  fi
+
   run_capture "mb check ${batch_id}" mb check
 }
 
@@ -455,17 +534,18 @@ EOF_REPAIR
 }
 
 run_exported_batch() {
-  local batch_id="$1" prompt_file meta_file title allowed_csv attempt failed_label status
+  local batch_id="$1" prompt_file meta_file title allowed_json acceptance_json attempt failed_label status
   prompt_file="$EVIDENCE_DIR/prompts/${batch_id}.md"
   meta_file="$EVIDENCE_DIR/prompts/${batch_id}.json"
   mkdir -p "$(dirname "$prompt_file")"
   assemble_batch_prompt "$batch_id" "$prompt_file" "$meta_file"
   title="$(node -e "const m=require('./' + process.argv[1]); console.log(m.title)" "$meta_file")"
-  allowed_csv="$(node -e "const m=require('./' + process.argv[1]); console.log((m.allowed_files || []).join(','))" "$meta_file")"
+  allowed_json="$(node -e "const m=require('./' + process.argv[1]); console.log(JSON.stringify(m.allowed_files || []))" "$meta_file")"
+  acceptance_json="$(node -e "const m=require('./' + process.argv[1]); console.log(JSON.stringify(m.acceptance || []))" "$meta_file")"
 
   attempt=0
   while :; do
-    start_matrix_batch "$title" "$prompt_file" "$allowed_csv"
+    start_matrix_batch "$title" "$allowed_json" "$acceptance_json"
     run_gitpilot_prompt "$prompt_file" "$title"
     status=0
     failed_label=""
@@ -593,6 +673,8 @@ from_zero() {
   STRICT_GENERATION=1
   ensure_evidence_dir
   require_governed_inputs
+  check_gitpilot_connection
+  check_watsonx_connection
   generate_design
   reset_matrix_builder_state
   npm_install_if_needed

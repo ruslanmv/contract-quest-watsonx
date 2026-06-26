@@ -1,61 +1,36 @@
-# Node dependencies and package-manager caches
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# Secrets
+.env.local
+.env.*.local
 
-# Python caches and virtual environments
-__pycache__/
-*.py[cod]
-*$py.class
+# Local tooling
+.tools/
 .venv/
-venv/
-env/
-ENV/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+node_modules/
 
-# Local credentials and environment files
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-
-# OS/editor files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Logs
-*.log
-logs/
-
-# Build/test outputs
-dist/
-build/
-.build/
-coverage/
-playwright-report/
-test-results/
-
-# Matrix Builder / generated local workflow state
+# Generated workflow state and evidence
 .mb/
+.build/
+EVIDENCE.md
 
-# Binary/archive artifacts generated locally
-*.zip
-*.tar
-*.tar.gz
-*.tgz
-*.gz
-*.7z
-*.rar
-*.exe
-*.dll
-*.so
-*.dylib
+# Generated game/application artifacts
+frontend/
+assets/
+design/
+scripts/
+tests/
+package.json
+package-lock.json
+vercel.json
+MATRIX_BLUEPRINT.yaml
+MATRIX_TASKS.md
+MATRIX_ACCEPTANCE_CRITERIA.md
+MATRIX_VALIDATION.md
+MATRIX_ALLOWED_CHANGES.md
+MATRIX_STANDARDS.lock
+
+# Generated test/deploy output
+dist/
+test-results/
+playwright-report/
+.pytest_cache/
+.env

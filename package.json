@@ -1,17 +1,12 @@
 {
-  "name": "contract-quest-watsonx",
+  "name": "contract-quest",
   "version": "1.0.0",
   "private": true,
-  "description": "Contract Quest browser game packaged for static hosting on Vercel.",
+  "type": "commonjs",
   "scripts": {
-    "build": "node scripts/verify-static.js",
-    "dev": "npx serve frontend",
-    "start": "npx serve frontend",
+    "build": "node scripts/verify-static.js --build",
     "verify": "node scripts/verify-static.js",
-    "smoke": "node scripts/run-smoke.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "smoke": "node tests/smoke.mjs"
   },
   "devDependencies": {}
 }

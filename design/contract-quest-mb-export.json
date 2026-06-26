@@ -9,7 +9,7 @@
       "npm run build",
       "npm run verify",
       "npm run smoke",
-      "mb check"
+      "mb check --changed <allowed files>"
     ],
     "batches": [
       {
@@ -139,5 +139,5 @@
       }
     ]
   },
-  "shared_prompt_header": "You are implementing a Matrix Designer-designed Contract Quest production batch. Follow the design bundle and Matrix export, stay in the allowed files, preserve logical viewport coordinates, jumpPressed/jumpHeld separation, boss-gate lock, lazy generated WebAudio, and evidence-backed claims."
+  "shared_prompt_header": "You are implementing a Matrix Designer-designed Contract Quest production batch with GitPilot on IBM watsonx.ai. Follow the design bundle and Matrix export, stay in the allowed files, preserve logical viewport coordinates, jumpPressed/jumpHeld separation, boss-gate lock, lazy generated WebAudio, and evidence-backed claims."
 }

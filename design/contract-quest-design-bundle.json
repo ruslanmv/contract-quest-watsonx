@@ -1,14 +1,13 @@
 {
   "schema_version": "matrix.designer.bundle/v1",
-  "design_id": "contract-quest-watsonx",
+  "design_id": "contract-quest-offline-sandbox",
   "project": "Contract Quest",
   "source": {
-    "type": "repo",
-    "path": "design/contract-quest-design-bundle.json"
+    "type": "offline-stub",
+    "blueprint": "design/blueprint.json"
   },
   "provenance": {
     "created_by": "Matrix Designer governed workflow",
-    "model": "openai/gpt-oss-120b",
     "ai_assisted": true
   },
   "goal_analysis": {
@@ -21,10 +20,10 @@
       "vanilla JavaScript",
       "static Vercel hosting"
     ],
-    "rationale": "The repository already ships a static single-file canvas game at frontend/index.html; this keeps the build reproducible without backend runtime credentials while preserving a future path to Phaser/Vite if the game is modularized."
+    "rationale": "Keep the game static, reproducible, and free of runtime credentials while Matrix Builder and GitPilot use watsonx.ai only during generation."
   },
   "visual_target": {
-    "style": "warm governed arcade pixel quest with layered parallax, readable HUD, deterministic original art, contract coins, validation gems, RMD panels, Matrix Gates, and a Rogue Architect boss."
+    "style": "warm governed arcade pixel quest with deterministic original art, contract coins, validation gems, RMD panels, Matrix Gates, and a Rogue Architect boss."
   },
   "architecture": {
     "systems": [
@@ -44,7 +43,7 @@
     "functional": [
       "npm run build passes and validates the static game artifact.",
       "npm run verify passes and checks design, Matrix export, Vercel configuration, and frontend markers.",
-      "npm run smoke passes where Playwright and browser binaries are installed, or skips non-strictly when the local fallback path lacks Playwright.",
+      "npm run smoke passes where Playwright and browser binaries are installed, or reports the environment limitation without requiring runtime credentials.",
       "The game exposes desktop and mobile controls and supports DPR 1 and DPR 2 viewport states.",
       "The final Matrix Gate cannot be completed while bossAlive is true.",
       "Audio initializes lazily only after a user gesture and uses generated WebAudio rather than external audio files.",
